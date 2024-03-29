@@ -21,9 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/component-base/version"
 	"k8s.io/component-base/version/verflag"
 	"k8s.io/utils/ptr"
@@ -78,13 +76,6 @@ func NewCommand() *cobra.Command {
 }
 
 func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
-	scheme := runtime.NewScheme()
-
-	err := clientgoscheme.AddToScheme(scheme)
-	if err != nil {
-		return err
-	}
-
 	cfg, err := ctrl.GetConfig()
 	if err != nil {
 		return err
@@ -92,7 +83,8 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Logger: log.WithName("manager"),
-		Scheme: scheme,
+		// TODO: use garden scheme when required
+		// Scheme: scheme,
 		Metrics: metricsserver.Options{
 			BindAddress: "0", // TODO enable metrics ":8080"
 		},
