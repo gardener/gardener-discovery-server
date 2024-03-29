@@ -52,7 +52,7 @@ func NewCommand() *cobra.Command {
 			}
 			logf.SetLogger(log)
 
-			log.Info("Starting "+AppName, "version", version.Get())
+			log.Info("Starting application", "app", AppName, "version", version.Get())
 			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 				log.Info("Flag", "name", flag.Name, "value", flag.Value, "default", flag.DefValue)
 			})
@@ -91,7 +91,7 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 	}
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
-		Logger: log.WithName("controller-runtime"),
+		Logger: log.WithName("manager"),
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
 			BindAddress: "0", // TODO enable metrics ":8080"
