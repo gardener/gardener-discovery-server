@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gardener/gardener/pkg/controllerutils"
-	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -22,7 +21,6 @@ import (
 // shoot openid configuration and JWKS.
 type Reconciler struct {
 	Client       client.Client
-	Log          logr.Logger
 	ResyncPeriod time.Duration
 }
 

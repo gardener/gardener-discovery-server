@@ -5,12 +5,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # 
 
+set -o errexit
+set -o pipefail
+
 repo_root="$(readlink -f $(dirname ${0})/..)"
 cert_dir="$repo_root/example/local/certs"
 
 mkdir -p "$cert_dir"
 
-if [[ -f "$cert_dir/tls.key" ]]; then
+if [[ -s "$cert_dir/tls.key" ]]; then
     echo "Development certificate found at $cert_dir. Skipping generation..."
     exit 0
 fi

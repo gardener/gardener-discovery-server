@@ -18,11 +18,11 @@ import (
 
 // Options contain the server options.
 type Options struct {
-	ResyncPeriod   ResyncOptions
+	ResyncOptions  ResyncOptions
 	ServingOptions ServingOptions
 }
 
-// ServingOptions are options applied to the authentication webhook server.
+// ServingOptions are options applied to the discovery server.
 type ServingOptions struct {
 	TLSCertFile string
 	TLSKeyFile  string
@@ -79,28 +79,24 @@ func (o *ResyncOptions) AddFlags(fs *pflag.FlagSet) {
 func (o *ResyncOptions) Validate() []error {
 	var errs []error
 	if o.Duration <= 0 {
-		errs = append(errs, errors.New("--resync-period should be positive"))
+		errs = append(errs, errors.New("--resync-period must be positive"))
 	}
 	return errs
 }
 
-func (s *ResyncOptions) ApplyTo(c *ResyncPeriod) error {
-	if s == nil {
-		return nil
-	}
+func (s *ResyncOptions) ApplyTo(c *ResyncConfig) error {
 	c.Duration = s.Duration
-
 	return nil
 }
 
-type ResyncPeriod struct {
+type ResyncConfig struct {
 	Duration time.Duration
 }
 
 // NewOptions return options with default values.
 func NewOptions() *Options {
 	opts := &Options{
-		ResyncPeriod: ResyncOptions{},
+		ResyncOptions: ResyncOptions{},
 	}
 	return opts
 }
@@ -108,31 +104,30 @@ func NewOptions() *Options {
 // AddFlags adds server options to flagset
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.ServingOptions.AddFlags(fs)
-	o.ResyncPeriod.AddFlags(fs)
+	o.ResyncOptions.AddFlags(fs)
 }
 
 // ApplyTo applies the options to the configuration.
 func (o *Options) ApplyTo(server *Config) error {
-	if err := o.ResyncPeriod.ApplyTo(&server.ResyncPeriod); err != nil {
+	if err := o.ResyncOptions.ApplyTo(&server.Resync); err != nil {
 		return err
 	}
 
-	if err := o.ServingOptions.ApplyTo(&server.Serving); err != nil {
-		return err
-	}
-
-	return nil
+	return o.ServingOptions.ApplyTo(&server.Serving)
 }
 
 // Validate checks if options are valid
 func (o *Options) Validate() []error {
-	return o.ServingOptions.Validate()
+	return append(
+		o.ResyncOptions.Validate(),
+		o.ServingOptions.Validate()...,
+	)
 }
 
 // Config has all the context to run the discovery server
 type Config struct {
-	ResyncPeriod ResyncPeriod
-	Serving      ServingConfig
+	Resync  ResyncConfig
+	Serving ServingConfig
 }
 
 type ServingConfig struct {

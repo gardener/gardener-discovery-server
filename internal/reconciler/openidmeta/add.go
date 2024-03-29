@@ -28,7 +28,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	selectorPredicate, err := predicate.LabelSelectorPredicate(metav1.LabelSelector{
 		MatchLabels: map[string]string{
 			// Gardener constants
-			// v1beta1constants.LabelPublicKeys: v1beta1constants.LabelPublicKeysServiceAccount,
+			// TODO: v1beta1constants.LabelPublicKeys: v1beta1constants.LabelPublicKeysServiceAccount,
 			"authentication.gardener.cloud/public-keys": "serviceaccount",
 		},
 	})

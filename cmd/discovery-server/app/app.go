@@ -35,16 +35,16 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
+const AppName = "gardener-discovery-server"
+
 // NewCommand is the root command for Gardener discovery server.
 func NewCommand() *cobra.Command {
 	opt := options.NewOptions()
 	conf := &options.Config{}
 
 	cmd := &cobra.Command{
-		Use: "gardener-discovery-server",
+		Use: AppName,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			verflag.PrintAndExitIfRequested()
-
 			logLevel, logFormat := "info", "json" // TODO make this configurable
 			log, err := logger.NewZapLogger(logLevel, logFormat)
 			if err != nil {
@@ -52,9 +52,9 @@ func NewCommand() *cobra.Command {
 			}
 			logf.SetLogger(log)
 
-			log.Info("Starting gardener-discovery-server", "version", version.Get())
+			log.Info("Starting "+AppName, "version", version.Get())
 			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-				log.Info(fmt.Sprintf("FLAG: --%s=%s", flag.Name, flag.Value))
+				log.Info("Flag", "name", flag.Name, "value", flag.Value, "default", flag.DefValue)
 			})
 
 			if err := opt.ApplyTo(conf); err != nil {
@@ -64,14 +64,8 @@ func NewCommand() *cobra.Command {
 			return run(cmd.Context(), log, conf)
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			var err error
-
-			errors := opt.Validate()
-			if len(errors) > 0 {
-				err = utilerrors.NewAggregate(errors)
-			}
-
-			return err
+			verflag.PrintAndExitIfRequested()
+			return utilerrors.NewAggregate(opt.Validate())
 		},
 	}
 
@@ -128,7 +122,7 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 	}
 
 	if err := (&openidmeta.Reconciler{
-		ResyncPeriod: opts.ResyncPeriod.Duration,
+		ResyncPeriod: opts.Resync.Duration,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller: %w", err)
 	}
@@ -153,15 +147,15 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 	mgrCh := make(chan error)
 	mgrCtx, cancelMgr := context.WithCancel(ctx)
 
-	go func(ch chan<- error) {
+	go func() {
 		defer cancelSrv()
-		ch <- mgr.Start(mgrCtx)
-	}(mgrCh)
+		mgrCh <- mgr.Start(mgrCtx)
+	}()
 
-	go func(ch chan<- error) {
+	go func() {
 		defer cancelMgr()
-		ch <- runServer(serverCtx, log, srv)
-	}(srvCh)
+		srvCh <- runServer(serverCtx, log, srv)
+	}()
 
 	select {
 	case err := <-mgrCh:

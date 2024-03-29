@@ -5,24 +5,21 @@
 package main
 
 import (
-	"log"
+	"os"
 
 	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app"
 
 	"github.com/spf13/pflag"
 	cliflag "k8s.io/component-base/cli/flag"
-	"k8s.io/component-base/logs"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func main() {
 	cmd := app.NewCommand()
 	pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
-	logs.InitLogs()
-	defer logs.FlushLogs()
 
 	if err := cmd.ExecuteContext(ctrl.SetupSignalHandler()); err != nil {
-		ctrl.Log.Info(err.Error())
-		log.Fatal(err)
+		ctrl.Log.Error(err, "Failed to run application", "name", cmd.Name())
+		os.Exit(1)
 	}
 }
