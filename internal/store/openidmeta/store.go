@@ -14,24 +14,29 @@ var (
 )
 
 type Reader interface {
-	Load(key string) (Data, bool)
+	Read(key string) (Data, bool)
 }
 
 type Writer interface {
-	Set(key string, data Data)
+	Write(key string, data Data)
 	Delete(key string)
 }
 
+// Store is a thread safe in-memory store that can be used to
+// read and write openid discovery metadata. Mind that the store
+// does not perform any validation on the inputs.
 type Store struct {
 	mutex sync.RWMutex
 	store map[string]Data
 }
 
+// Data holds openid discovery metadata.
 type Data struct {
 	Config []byte
 	JWKS   []byte
 }
 
+// NewStore returns a ready for use [Store].
 func NewStore() *Store {
 	return &Store{
 		store: make(map[string]Data),
@@ -48,7 +53,8 @@ func copyData(data Data) Data {
 	return out
 }
 
-func (s *Store) Load(key string) (Data, bool) {
+// Read retrieves an entry from the [Store].
+func (s *Store) Read(key string) (Data, bool) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	data, ok := s.store[key]
@@ -58,19 +64,23 @@ func (s *Store) Load(key string) (Data, bool) {
 	return Data{}, ok
 }
 
-func (s *Store) Set(key string, data Data) {
+// Write sets and entry to the [Store].
+// If the entry exists it is overwritten.
+func (s *Store) Write(key string, data Data) {
 	d := copyData(data)
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.store[key] = d
 }
 
+// Delete removes an entry from the [Store].
 func (s *Store) Delete(key string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	delete(s.store, key)
 }
 
+// Len returns the number of entries in the [Store].
 func (s *Store) Len() int {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()

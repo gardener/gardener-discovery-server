@@ -21,12 +21,12 @@ var _ = Describe("Store", func() {
 		data           openidmeta.Data
 		expectedData   openidmeta.Data
 		assertExpected = func(store *openidmeta.Store, key string, expected openidmeta.Data) {
-			retrieved, ok := store.Load(key)
+			retrieved, ok := store.Read(key)
 			Expect(ok).To(BeTrue())
 			Expect(retrieved).To(Equal(expected))
 		}
 		assertNotFound = func(store *openidmeta.Store, key string) {
-			retrieved, ok := store.Load(key)
+			retrieved, ok := store.Read(key)
 			Expect(ok).To(BeFalse())
 			Expect(retrieved).To(Equal(openidmeta.Data{}))
 		}
@@ -48,38 +48,38 @@ var _ = Describe("Store", func() {
 	})
 
 	It("should not find an entry", func() {
-		store.Set(fooKey, data)
+		store.Write(fooKey, data)
 		Expect(store.Len()).To(Equal(1))
 
 		assertNotFound(store, "bar")
 	})
 
 	It("should correctly set an entry", func() {
-		store.Set(fooKey, data)
+		store.Write(fooKey, data)
 
 		Expect(store.Len()).To(Equal(1))
 		assertExpected(store, fooKey, expectedData)
 	})
 
 	It("should correctly overwrite an entry", func() {
-		store.Set(fooKey, data)
+		store.Write(fooKey, data)
 
 		Expect(store.Len()).To(Equal(1))
 		assertExpected(store, fooKey, expectedData)
 
 		newData := openidmeta.Data{Config: []byte("foo"), JWKS: []byte("bar")}
 		expectedNewData := openidmeta.Data{Config: []byte("foo"), JWKS: []byte("bar")}
-		store.Set(fooKey, newData)
+		store.Write(fooKey, newData)
 
 		Expect(store.Len()).To(Equal(1))
 		assertExpected(store, fooKey, expectedNewData)
 	})
 
 	It("should not be able to modify the unredlying entry", func() {
-		store.Set(fooKey, data)
+		store.Write(fooKey, data)
 
 		Expect(store.Len()).To(Equal(1))
-		retrieved, ok := store.Load(fooKey)
+		retrieved, ok := store.Read(fooKey)
 
 		Expect(ok).To(BeTrue())
 		Expect(retrieved).To(Equal(expectedData))
@@ -92,7 +92,7 @@ var _ = Describe("Store", func() {
 	})
 
 	It("should correctly remove an entry", func() {
-		store.Set(fooKey, data)
+		store.Write(fooKey, data)
 
 		assertExpected(store, fooKey, expectedData)
 
@@ -115,7 +115,7 @@ var _ = Describe("Store", func() {
 		wg.Add(len(initialEntries))
 		for k, e := range initialEntries {
 			go func() {
-				store.Set(k, e)
+				store.Write(k, e)
 				wg.Done()
 			}()
 		}
@@ -149,7 +149,7 @@ var _ = Describe("Store", func() {
 		wg.Add(len(modifyEntries))
 		for k, e := range modifyEntries {
 			go func() {
-				store.Set(k, e)
+				store.Write(k, e)
 				wg.Done()
 			}()
 		}
