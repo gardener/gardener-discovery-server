@@ -49,8 +49,8 @@ var _ = Describe("Store", func() {
 
 	It("should not find an entry", func() {
 		store.Write(fooKey, data)
-		Expect(store.Len()).To(Equal(1))
 
+		Expect(store.Len()).To(Equal(1))
 		assertNotFound(store, "bar")
 	})
 

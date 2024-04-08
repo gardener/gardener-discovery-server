@@ -13,10 +13,12 @@ var (
 	_ Writer = (*Store)(nil)
 )
 
+// Reader lets the consumer read entries from [Store].
 type Reader interface {
 	Read(key string) (Data, bool)
 }
 
+// Writer lets the consumer write entries to [Store].
 type Writer interface {
 	Write(key string, data Data)
 	Delete(key string)
@@ -84,6 +86,5 @@ func (s *Store) Delete(key string) {
 func (s *Store) Len() int {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	len := len(s.store)
-	return len
+	return len(s.store)
 }
