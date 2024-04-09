@@ -63,7 +63,7 @@ func (s *Store) Read(key string) (Data, bool) {
 	if ok {
 		return copyData(data), ok
 	}
-	return Data{}, ok
+	return Data{}, false
 }
 
 // Write sets and entry to the [Store].
