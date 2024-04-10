@@ -19,7 +19,7 @@ var _ = Describe("Utils", func() {
 			projName := "test"
 			uid := uuid.New().String()
 			name, id, err := utils.SplitProjectNameAndShootUID(projName + "--" + uid)
-			Expect(err).ToNot(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 			Expect(name).To(Equal(projName))
 			Expect(id).To(Equal(uid))
 		})
