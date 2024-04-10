@@ -7,11 +7,11 @@ package main
 import (
 	"os"
 
-	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app"
-
 	"github.com/spf13/pflag"
 	cliflag "k8s.io/component-base/cli/flag"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app"
 )
 
 func main() {
