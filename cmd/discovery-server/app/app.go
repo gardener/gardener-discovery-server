@@ -14,19 +14,23 @@ import (
 	"time"
 
 	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app/options"
-	"github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
+	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
+	store "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	gardenerhealthz "github.com/gardener/gardener/pkg/healthz"
 	"github.com/gardener/gardener/pkg/logger"
 	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	corev1 "k8s.io/api/core/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/component-base/version"
 	"k8s.io/component-base/version/verflag"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	controllerconfig "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -83,8 +87,7 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Logger: log.WithName("manager"),
-		// TODO: use garden scheme when required
-		// Scheme: scheme,
+		Scheme: kubernetes.GardenScheme,
 		Metrics: metricsserver.Options{
 			BindAddress: "0", // TODO enable metrics ":8080"
 		},
@@ -93,9 +96,12 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		PprofBindAddress:        "",
 		HealthProbeBindAddress:  net.JoinHostPort("", "8081"),
 		Cache: cache.Options{
-			DefaultNamespaces: map[string]cache.Config{
-				// gardencorev1beta1.GardenerShootIssuerNamespace: {},
-				"gardener-system-shoot-issuer": {}, // TODO: should this be configurable?
+			ByObject: map[client.Object]cache.ByObject{
+				&corev1.Secret{}: {
+					Namespaces: map[string]cache.Config{
+						"gardener-system-shoot-issuer": {},
+					},
+				},
 			},
 		},
 		Controller: controllerconfig.Controller{
@@ -113,8 +119,10 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		return err
 	}
 
-	if err := (&openidmeta.Reconciler{
+	store := store.NewStore()
+	if err := (&oidreconciler.Reconciler{
 		ResyncPeriod: opts.Resync.Duration,
+		Store:        store,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller: %w", err)
 	}

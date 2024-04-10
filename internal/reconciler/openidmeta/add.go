@@ -7,13 +7,15 @@ package openidmeta
 import (
 	"time"
 
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"golang.org/x/time/rate"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
@@ -25,20 +27,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if r.Client == nil {
 		r.Client = mgr.GetClient()
 	}
-	selectorPredicate, err := predicate.LabelSelectorPredicate(metav1.LabelSelector{
-		MatchLabels: map[string]string{
-			// Gardener constants
-			// TODO: v1beta1constants.LabelPublicKeys: v1beta1constants.LabelPublicKeysServiceAccount,
-			"authentication.gardener.cloud/public-keys": "serviceaccount",
-		},
-	})
-	if err != nil {
-		return err
-	}
 
 	return builder.ControllerManagedBy(mgr).
 		Named(ControllerName).
-		For(&corev1.Secret{}, builder.WithPredicates(selectorPredicate)). // TODO it is not yet clear what the predicate should be
+		For(&corev1.Secret{}, builder.WithPredicates(secretPredicate())). // TODO it is not yet clear what the predicate should be
 		WithOptions(controller.Options{
 			MaxConcurrentReconciles: 50,
 			RateLimiter: workqueue.NewMaxOfRateLimiter(
@@ -47,4 +39,25 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 			),
 		}).
 		Complete(r)
+}
+
+func secretPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc:  func(e event.CreateEvent) bool { return isRelevantSecret(e.Object) },
+		UpdateFunc:  func(e event.UpdateEvent) bool { return isRelevantSecretUpdate(e.ObjectOld, e.ObjectNew) },
+		DeleteFunc:  func(e event.DeleteEvent) bool { return isRelevantSecret(e.Object) },
+		GenericFunc: func(_ event.GenericEvent) bool { return false },
+	}
+}
+
+func isRelevantSecret(obj client.Object) bool {
+	secret, ok := obj.(*corev1.Secret)
+	if !ok {
+		return false
+	}
+	return secret.Labels != nil && secret.Labels[v1beta1constants.LabelPublicKeys] == v1beta1constants.LabelPublicKeysServiceAccount
+}
+
+func isRelevantSecretUpdate(oldObj, newObj client.Object) bool {
+	return isRelevantSecret(newObj) || isRelevantSecret(oldObj)
 }
