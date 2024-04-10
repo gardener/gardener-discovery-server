@@ -35,8 +35,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-
-	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app/options"
 )
 
 // AppName is the name of the application.
