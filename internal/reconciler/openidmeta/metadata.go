@@ -79,7 +79,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	labels := secret.GetLabels()
 	if v, ok := labels[v1beta1constants.LabelPublicKeys]; !ok || v != v1beta1constants.LabelPublicKeysServiceAccount {
-		log.Info("Removing metadata from store - secret does not have expected label", "label", v1beta1constants.LabelPublicKeys)
+		log.Info("Removing metadata from store - secret does not have expected label or its value is incorrect", "label", v1beta1constants.LabelPublicKeys, "value", v)
 		r.Store.Delete(req.Name)
 		return reconcile.Result{}, nil
 	}
@@ -172,7 +172,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	if v, ok := shoot.Annotations[v1beta1constants.AnnotationAuthenticationIssuer]; !ok || v != v1beta1constants.AnnotationAuthenticationIssuerManaged {
-		log.Info("Removing metadata from store - shoot managed issuer annotation is missing", "shoot", client.ObjectKeyFromObject(shoot))
+		log.Info("Removing metadata from store - shoot managed issuer annotation is missing or it has an invalid value", "shoot", client.ObjectKeyFromObject(shoot), "value", v)
 		r.Store.Delete(req.Name)
 
 		return reconcile.Result{}, nil
