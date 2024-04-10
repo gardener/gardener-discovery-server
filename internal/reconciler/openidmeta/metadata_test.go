@@ -105,10 +105,10 @@ var _ = Describe("#bootstrapCluster", func() {
 
 		var err error
 		keySet, err = generateKeySet()
-		Expect(err).To(Not(HaveOccurred()))
+		Expect(err).ToNot(HaveOccurred())
 
 		jwksBytes, err := json.Marshal(keySet)
-		Expect(err).To(Not(HaveOccurred()))
+		Expect(err).ToNot(HaveOccurred())
 		expectedJWKSBytes = slices.Clone(jwksBytes)
 
 		secret = &corev1.Secret{
@@ -142,7 +142,7 @@ var _ = Describe("#bootstrapCluster", func() {
 		Expect(c.Create(ctx, secret)).To(Succeed())
 
 		res, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(secret)})
-		Expect(err).To(Not(HaveOccurred()))
+		Expect(err).ToNot(HaveOccurred())
 		Expect(res).To(Equal(ctrl.Result{RequeueAfter: resyncPeriod}))
 
 		Expect(store.Len()).To(Equal(1))
@@ -160,7 +160,7 @@ var _ = Describe("#bootstrapCluster", func() {
 			Expect(c.Create(ctx, secret)).To(Succeed())
 
 			res, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: secretNamespacedName})
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 			Expect(res).To(Equal(ctrl.Result{RequeueAfter: resyncPeriod}))
 
 			Expect(store.Len()).To(Equal(1))
@@ -172,7 +172,7 @@ var _ = Describe("#bootstrapCluster", func() {
 			prepFunc()
 
 			res, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: secretNamespacedName})
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 			Expect(res).To(Equal(ctrl.Result{}))
 
 			Expect(store.Len()).To(Equal(0))
@@ -250,21 +250,21 @@ var _ = Describe("#bootstrapCluster", func() {
 		}),
 		Entry("jwks contains a private key", func() {
 			key, err := rsa.GenerateKey(rand.Reader, 2048)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 
 			privateKey := jose.JSONWebKey{Key: key, KeyID: "", Algorithm: string(jose.RS256), Use: "sig"}
 			thumb, err := privateKey.Thumbprint(crypto.SHA256)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 			kid := base64.URLEncoding.EncodeToString(thumb)
 			privateKey.KeyID = kid
 
 			keySet := &jose.JSONWebKeySet{}
 			err = json.Unmarshal(secret.Data["jwks"], keySet)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 			keySet.Keys = append(keySet.Keys, privateKey)
 
 			jwksBytes, err := json.Marshal(keySet)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 
 			secret.Data["jwks"] = jwksBytes
 			Expect(c.Update(ctx, secret)).To(Succeed())
@@ -272,7 +272,7 @@ var _ = Describe("#bootstrapCluster", func() {
 		Entry("jwks contains an invalid key", func() {
 			keySet := &jose.JSONWebKeySet{}
 			err := json.Unmarshal(secret.Data["jwks"], keySet)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 
 			// this key will not be unmarshaled successfully
 			pubKey := &rsa.PublicKey{
@@ -282,7 +282,7 @@ var _ = Describe("#bootstrapCluster", func() {
 			keySet.Keys[0].Key = pubKey
 
 			jwksBytes, err := json.Marshal(keySet)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 
 			secret.Data["jwks"] = jwksBytes
 			Expect(c.Update(ctx, secret)).To(Succeed())
