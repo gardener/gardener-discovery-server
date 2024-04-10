@@ -7,9 +7,10 @@ package openidmeta_test
 import (
 	"sync"
 
-	"github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 )
 
 var _ = Describe("Store", func() {
@@ -85,8 +86,8 @@ var _ = Describe("Store", func() {
 		Expect(retrieved).To(Equal(expectedData))
 
 		// modify a single byte
-		retrieved.Config[0] = retrieved.Config[0] + 1
-		retrieved.JWKS[0] = retrieved.JWKS[0] + 1
+		retrieved.Config[0]++
+		retrieved.JWKS[0]++
 
 		assertExpected(store, fooKey, expectedData)
 	})

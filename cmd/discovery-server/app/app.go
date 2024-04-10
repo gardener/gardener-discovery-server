@@ -35,8 +35,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app/options"
 )
 
+// AppName is the name of the application.
 const AppName = "gardener-discovery-server"
 
 // NewCommand is the root command for Gardener discovery server.
@@ -46,7 +49,7 @@ func NewCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use: AppName,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			logLevel, logFormat := "info", "json" // TODO make this configurable
 			log, err := logger.NewZapLogger(logLevel, logFormat)
 			if err != nil {
@@ -65,7 +68,7 @@ func NewCommand() *cobra.Command {
 
 			return run(cmd.Context(), log, conf)
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			verflag.PrintAndExitIfRequested()
 			return utilerrors.NewAggregate(opt.Validate())
 		},
@@ -129,8 +132,8 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 
 	// TODO: implement a real handler
 	mux := http.NewServeMux()
-	mux.Handle("GET /hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
+	mux.Handle("GET /hello", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("hello")) //nolint:errcheck,gosec
 	}))
 
 	srv := &http.Server{

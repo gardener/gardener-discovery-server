@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
+// ControllerName is the name of the shoot metadata controller.
 const ControllerName = "shoot-openid-metadata"
 
 // SetupWithManager specifies how the controller is built to watch secrets

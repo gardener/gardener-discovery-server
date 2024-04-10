@@ -12,3 +12,9 @@
 *.out
 
 /example/local/certs
+
+/hack/tools/bin
+
+*.coverprofile
+*.html
+.vscode
