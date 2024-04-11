@@ -7,10 +7,11 @@ package utils_test
 import (
 	"errors"
 
-	"github.com/gardener/gardener-discovery-server/internal/utils"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/gardener/gardener-discovery-server/internal/utils"
 )
 
 var _ = Describe("Utils", func() {
