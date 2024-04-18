@@ -18,7 +18,7 @@ if [[ -s "$cert_dir/tls.key" ]]; then
     exit 0
 fi
 
-echo "Generating developmlent certificate..."
+echo "Generating development certificate..."
 openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -days 365 \
   -nodes -keyout "$cert_dir/tls.key" -out "$cert_dir/tls.crt" \
   -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
