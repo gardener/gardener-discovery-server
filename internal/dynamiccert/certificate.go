@@ -96,7 +96,7 @@ func (dc *DynamicCertificate) GetCertificate(_ *tls.ClientHelloInfo) (*tls.Certi
 type Option func(*DynamicCertificate)
 
 // WithRefreshInterval sets the interval that will be used
-// to periodically check in the TLS certificate should be refreshed.
+// to periodically check if the TLS certificate should be refreshed.
 func WithRefreshInterval(interval time.Duration) Option {
 	return func(dc *DynamicCertificate) {
 		dc.interval = interval
