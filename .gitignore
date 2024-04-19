@@ -18,3 +18,5 @@
 *.coverprofile
 *.html
 .vscode
+
+testdata
