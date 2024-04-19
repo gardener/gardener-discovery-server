@@ -6,6 +6,7 @@ package app
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
@@ -34,6 +35,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app/options"
+	"github.com/gardener/gardener-discovery-server/internal/dynamiccert"
 	oidhandler "github.com/gardener/gardener-discovery-server/internal/handler/openidmeta"
 	"github.com/gardener/gardener-discovery-server/internal/metrics"
 	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
@@ -150,10 +152,22 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		metrics.InstrumentHandler(jwksPath, http.HandlerFunc(h.HandleJWKS)),
 	)
 
+	cert, err := dynamiccert.New(
+		opts.Serving.TLSCertFile,
+		opts.Serving.TLSKeyFile,
+		dynamiccert.WithLogger(log.WithName("dynamic-cert")),
+		dynamiccert.WithRefreshInterval(time.Minute),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to parse discovery server certificates: %w", err)
+	}
+
 	srv := &http.Server{
-		Addr:         opts.Serving.Address,
-		Handler:      mux,
-		TLSConfig:    opts.Serving.TLSConfig,
+		Addr:    opts.Serving.Address,
+		Handler: mux,
+		TLSConfig: &tls.Config{
+			GetCertificate: cert.GetCertificate,
+		},
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
