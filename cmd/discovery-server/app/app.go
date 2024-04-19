@@ -156,7 +156,7 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		opts.Serving.TLSCertFile,
 		opts.Serving.TLSKeyFile,
 		dynamiccert.WithLogger(log.WithName("dynamic-cert")),
-		dynamiccert.WithRefreshInterval(time.Minute),
+		dynamiccert.WithRefreshInterval(5*time.Minute),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to parse discovery server certificates: %w", err)
