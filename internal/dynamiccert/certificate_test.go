@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/gardener/gardener-discovery-server/internal/dynamiccert"
+	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 var _ = Describe("#DynamicCertificate", func() {
@@ -24,6 +25,7 @@ var _ = Describe("#DynamicCertificate", func() {
 			servercert,
 			serverkey,
 			dynamiccert.WithRefreshInterval(time.Millisecond*100),
+			dynamiccert.WithLogger(logzap.New(logzap.WriteTo(GinkgoWriter))),
 		)
 		Expect(err).ToNot(HaveOccurred())
 	})

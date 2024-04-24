@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	oidhandler "github.com/gardener/gardener-discovery-server/internal/handler/openidmeta"
 	oidstore "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
@@ -40,7 +40,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			JWKS:   []byte("jwks2"),
 		})
 
-		handler = oidhandler.New(store, logr.Discard())
+		handler = oidhandler.New(store, logzap.New(logzap.WriteTo(GinkgoWriter)))
 		mux = http.NewServeMux()
 		mux.HandleFunc("GET /projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configuration", handler.HandleWellKnown)
 		mux.HandleFunc("GET /projects/{projectName}/shoots/{shootUID}/issuer/jwks", handler.HandleJWKS)
