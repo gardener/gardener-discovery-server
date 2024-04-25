@@ -20,8 +20,8 @@ endif
 TOOLS_DIR := $(REPO_ROOT)/hack/tools
 include $(GARDENER_HACK_DIR)/tools.mk
 
-.PHONY: run
-run:
+.PHONY: start
+start:
 	./hack/cert-gen.sh
 	go run -ldflags $(LD_FLAGS) ./cmd/discovery-server/main.go \
 		--tls-cert-file=./example/local/certs/tls.crt \
