@@ -17,5 +17,5 @@ export KUBECONFIG=/path-to/garden-kubeconfig
 You should be able to start the discovery server with the following command.
 
 ```bash
-make run
+make start
 ```
