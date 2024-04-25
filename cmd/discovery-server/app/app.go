@@ -167,6 +167,9 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		Handler: mux,
 		TLSConfig: &tls.Config{
 			GetCertificate: cert.GetCertificate,
+			// TODO: remove in the future
+			// gosec complains although 1.2 is the current default
+			MinVersion: tls.VersionTLS12,
 		},
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
