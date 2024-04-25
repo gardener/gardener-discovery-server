@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+gardener-discovery-server:
+  base_definition:
+    traits:
+      version:
+        preprocess: 'inject-commit-hash'
+  jobs:
+    head-update:
+      traits:
+        component_descriptor:
+          ocm_repository: europe-docker.pkg.dev/gardener-project/snapshots
+          ocm_repository_mappings:
+            - repository: europe-docker.pkg.dev/gardener-project/releases
+        draft_release: ~
+        options:
+          public_build_logs: true
+    release:
+      steps:
+        verify:
+          image: 'golang:1.22.2'
+      traits:
+        version:
+          preprocess: 'finalize'
+        component_descriptor:
+          ocm_repository: europe-docker.pkg.dev/gardener-project/releases
+        release:
+          nextversion: 'bump_minor'
+          next_version_callback: '.ci/prepare_release'
+          release_callback: '.ci/prepare_release'
+        slack:
+          default_channel: 'internal_scp_workspace'
+          channel_cfgs:
+            internal_scp_workspace:
+              channel_name: 'C9CEBQPGE' #sap-tech-gardener
+              slack_cfg_name: 'scp_workspace'
+        publish:
+          oci-builder: docker-buildx
+          platforms:
+          - linux/amd64
+          - linux/arm64
+          dockerimages:
+            gardener-discovery-server:
+              image: europe-docker.pkg.dev/gardener-project/releases/gardener/gardener-discovery-server
+              dockerfile: 'Dockerfile'
+              target: gardener-discovery-server
+              tag_as_latest: true
