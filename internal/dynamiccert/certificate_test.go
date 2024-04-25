@@ -10,9 +10,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/gardener/gardener-discovery-server/internal/dynamiccert"
-	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 var _ = Describe("#DynamicCertificate", func() {
