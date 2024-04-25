@@ -1,6 +1,6 @@
 # Gardener Discovery Server
 
-[![reuse compliant](https://reuse.software/badge/reuse-compliant.svg)](https://reuse.software/)
+[![REUSE status](https://api.reuse.software/badge/github.com/gardener/gardener-discovery-server)](https://api.reuse.software/info/github.com/gardener/gardener-discovery-server)
 
 A server capable of serving public metadata about different Gardener resources like shoot OIDC discovery documents.
 
