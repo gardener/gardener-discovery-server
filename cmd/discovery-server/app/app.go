@@ -6,6 +6,7 @@ package app
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
@@ -13,14 +14,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app/options"
-	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
-	store "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
-
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	gardenerhealthz "github.com/gardener/gardener/pkg/healthz"
 	"github.com/gardener/gardener/pkg/logger"
 	"github.com/go-logr/logr"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
@@ -35,6 +33,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app/options"
+	"github.com/gardener/gardener-discovery-server/internal/dynamiccert"
+	oidhandler "github.com/gardener/gardener-discovery-server/internal/handler/openidmeta"
+	"github.com/gardener/gardener-discovery-server/internal/metrics"
+	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
+	store "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 )
 
 // AppName is the name of the application.
@@ -90,7 +95,10 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		Logger: log.WithName("manager"),
 		Scheme: kubernetes.GardenScheme,
 		Metrics: metricsserver.Options{
-			BindAddress: "0", // TODO enable metrics ":8080"
+			BindAddress: net.JoinHostPort("", "8080"),
+			ExtraHandlers: map[string]http.Handler{
+				"/metrics/discovery-server": promhttp.Handler(),
+			},
 		},
 		GracefulShutdownTimeout: ptr.To(5 * time.Second),
 		LeaderElection:          false,
@@ -128,16 +136,38 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		return fmt.Errorf("unable to create controller: %w", err)
 	}
 
-	// TODO: implement a real handler
+	h := oidhandler.New(store, log.WithName("oid-meta-handler"))
+
 	mux := http.NewServeMux()
-	mux.Handle("GET /hello", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Write([]byte("hello")) //nolint:errcheck,gosec
-	}))
+	const (
+		oidConfigPath = "/projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configuration"
+		jwksPath      = "/projects/{projectName}/shoots/{shootUID}/issuer/jwks"
+	)
+	mux.Handle(
+		"GET "+oidConfigPath,
+		metrics.InstrumentHandler(oidConfigPath, http.HandlerFunc(h.HandleWellKnown)),
+	)
+	mux.Handle(
+		"GET "+jwksPath,
+		metrics.InstrumentHandler(jwksPath, http.HandlerFunc(h.HandleJWKS)),
+	)
+
+	cert, err := dynamiccert.New(
+		opts.Serving.TLSCertFile,
+		opts.Serving.TLSKeyFile,
+		dynamiccert.WithLogger(log.WithName("dynamic-cert")),
+		dynamiccert.WithRefreshInterval(5*time.Minute),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to parse discovery server certificates: %w", err)
+	}
 
 	srv := &http.Server{
-		Addr:         opts.Serving.Address,
-		Handler:      mux,
-		TLSConfig:    opts.Serving.TLSConfig,
+		Addr:    opts.Serving.Address,
+		Handler: mux,
+		TLSConfig: &tls.Config{
+			GetCertificate: cert.GetCertificate,
+		},
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}

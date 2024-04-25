@@ -5,9 +5,7 @@
 package options
 
 import (
-	"crypto/tls"
 	"errors"
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -57,16 +55,9 @@ func (o *ServingOptions) Validate() []error {
 // ApplyTo applies the options to the configuration.
 func (o *ServingOptions) ApplyTo(c *ServingConfig) error {
 	c.Address = net.JoinHostPort(o.Address, strconv.Itoa(int(o.Port)))
-	serverCert, err := tls.LoadX509KeyPair(o.TLSCertFile, o.TLSKeyFile)
-	if err != nil {
-		return fmt.Errorf("failed to parse discovery server certificates: %w", err)
-	}
 
-	c.TLSConfig = &tls.Config{
-		Certificates: []tls.Certificate{serverCert},
-		MinVersion:   tls.VersionTLS12,
-	}
-
+	c.TLSCertFile = o.TLSCertFile
+	c.TLSKeyFile = o.TLSKeyFile
 	return nil
 }
 
@@ -139,6 +130,8 @@ type Config struct {
 
 // ServingConfig has the context to run an http server.
 type ServingConfig struct {
-	TLSConfig *tls.Config
-	Address   string
+	Address string
+
+	TLSCertFile string
+	TLSKeyFile  string
 }

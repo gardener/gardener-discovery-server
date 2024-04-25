@@ -10,9 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
-	"github.com/gardener/gardener-discovery-server/internal/utils"
-
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/controllerutils"
@@ -24,6 +21,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
+	"github.com/gardener/gardener-discovery-server/internal/utils"
 )
 
 // Reconciler reconciles secret objects that contain

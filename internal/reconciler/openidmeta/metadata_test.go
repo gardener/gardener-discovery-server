@@ -15,9 +15,6 @@ import (
 	"slices"
 	"time"
 
-	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
-	oidstore "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
-
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/go-jose/go-jose/v4"
@@ -32,9 +29,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
+	oidstore "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 )
 
-var _ = Describe("#bootstrapCluster", func() {
+var _ = Describe("#ReconcileOpenIDMeta", func() {
 	var (
 		reconciler *oidreconciler.Reconciler
 
