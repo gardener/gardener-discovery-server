@@ -96,7 +96,7 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		Metrics: metricsserver.Options{
 			BindAddress: net.JoinHostPort("", "8080"),
 		},
-		GracefulShutdownTimeout: ptr.To(5 * time.Second),
+		GracefulShutdownTimeout: ptr.To(10 * time.Second),
 		LeaderElection:          false,
 		PprofBindAddress:        "",
 		HealthProbeBindAddress:  net.JoinHostPort("", "8081"),
