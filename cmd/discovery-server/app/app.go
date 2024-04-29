@@ -18,7 +18,6 @@ import (
 	gardenerhealthz "github.com/gardener/gardener/pkg/healthz"
 	"github.com/gardener/gardener/pkg/logger"
 	"github.com/go-logr/logr"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
@@ -96,9 +95,6 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		Scheme: kubernetes.GardenScheme,
 		Metrics: metricsserver.Options{
 			BindAddress: net.JoinHostPort("", "8080"),
-			ExtraHandlers: map[string]http.Handler{
-				"/metrics/discovery-server": promhttp.Handler(),
-			},
 		},
 		GracefulShutdownTimeout: ptr.To(5 * time.Second),
 		LeaderElection:          false,
