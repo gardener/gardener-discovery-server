@@ -9,10 +9,12 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 func init() {
 	prometheus.MustRegister(requestLatency, requestTotal, requestInFlight)
+	metrics.Registry.MustRegister(requestLatency, requestTotal, requestInFlight)
 }
 
 const (
