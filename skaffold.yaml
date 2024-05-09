@@ -1,0 +1,43 @@
+---
+apiVersion: skaffold/v4beta7
+kind: Config
+metadata:
+  name: discovery-server
+build:
+  artifacts:
+  - image: europe-docker.pkg.dev/gardener-project/public/gardener/gardener-discovery-server
+    ko:
+      dependencies:
+        paths:
+        - cmd/discovery-server
+        - cmd/discovery-server/app
+        - cmd/discovery-server/app/options
+        - internal/dynamiccert
+        - internal/handler/openidmeta
+        - internal/metrics
+        - internal/reconciler/openidmeta
+        - internal/store/openidmeta
+        - internal/utils
+        - VERSION
+      ldflags:
+      - '{{.LD_FLAGS}}'
+      main: ./cmd/discovery-server
+deploy:
+  helm:
+    hooks:
+      before:
+        - host:
+            command:
+              - ./hack/create-tls-secret.sh
+    releases:
+    - name: gardener-discovery-server
+      chartPath: charts/discovery-server
+      valuesFiles:
+        - example/local/values.yaml
+      namespace: garden
+      setValueTemplates:
+        image.repository: '{{.IMAGE_REPO_europe_docker_pkg_dev_gardener_project_public_gardener_gardener_discovery_server}}'
+        image.tag: '{{.IMAGE_TAG_europe_docker_pkg_dev_gardener_project_public_gardener_gardener_discovery_server}}@{{.IMAGE_DIGEST_europe_docker_pkg_dev_gardener_project_public_gardener_gardener_discovery_server}}'
+      createNamespace: true
+      wait: false
+profiles: []
