@@ -147,6 +147,7 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		"GET "+jwksPath,
 		metrics.InstrumentHandler(jwksPath, http.HandlerFunc(h.HandleJWKS)),
 	)
+	mux.Handle("/", http.HandlerFunc(h.HandleNotFound))
 
 	cert, err := dynamiccert.New(
 		opts.Serving.TLSCertFile,
