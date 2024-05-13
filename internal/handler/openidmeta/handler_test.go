@@ -44,6 +44,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 		mux = http.NewServeMux()
 		mux.HandleFunc("GET /projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configuration", handler.HandleWellKnown)
 		mux.HandleFunc("GET /projects/{projectName}/shoots/{shootUID}/issuer/jwks", handler.HandleJWKS)
+		mux.HandleFunc("/", handler.HandleNotFound)
 	})
 
 	DescribeTable(
@@ -132,6 +133,15 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			"https://abc.def/projects/not-existent/shoots/not-a-uuid/issuer/jwks",
 			400,
 			[]byte(`{"code":400,"message":"bad request"}`),
+			map[string]string{
+				"Content-Type": "application/json",
+			},
+		),
+		Entry(
+			"should return not found querying a non existent endpoint",
+			"https://abc.def/does-not-exist",
+			404,
+			[]byte(`{"code":404,"message":"not found"}`),
 			map[string]string{
 				"Content-Type": "application/json",
 			},

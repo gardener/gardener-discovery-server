@@ -55,12 +55,7 @@ func (h *Handler) HandleWellKnown(w http.ResponseWriter, r *http.Request) {
 	projectName := r.PathValue("projectName")
 	data, ok := h.store.Read(projectName + "--" + shootUID)
 	if !ok {
-		w.Header().Set(headerContentType, mimeAppJSON)
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte(responseNotFound)); err != nil {
-			h.log.Error(err, "Failed writing response")
-			return
-		}
+		h.HandleNotFound(w, r)
 		return
 	}
 
@@ -89,18 +84,23 @@ func (h *Handler) HandleJWKS(w http.ResponseWriter, r *http.Request) {
 	projectName := r.PathValue("projectName")
 	data, ok := h.store.Read(projectName + "--" + shootUID)
 	if !ok {
-		w.Header().Set(headerContentType, mimeAppJSON)
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte(responseNotFound)); err != nil {
-			h.log.Error(err, "Failed writing response")
-			return
-		}
+		h.HandleNotFound(w, r)
 		return
 	}
 
 	w.Header().Set(headerCacheControl, pubCacheControl)
 	w.Header().Set(headerContentType, mimeAppJSON)
 	if _, err := w.Write(data.JWKS); err != nil {
+		h.log.Error(err, "Failed writing response")
+		return
+	}
+}
+
+// HandleNotFound writes a not found response to writer.
+func (h *Handler) HandleNotFound(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set(headerContentType, mimeAppJSON)
+	w.WriteHeader(http.StatusNotFound)
+	if _, err := w.Write([]byte(responseNotFound)); err != nil {
 		h.log.Error(err, "Failed writing response")
 		return
 	}
