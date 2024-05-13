@@ -97,7 +97,7 @@ func (h *Handler) HandleJWKS(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleNotFound writes a not found response to writer.
-func (h *Handler) HandleNotFound(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleNotFound(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set(headerContentType, mimeAppJSON)
 	w.WriteHeader(http.StatusNotFound)
 	if _, err := w.Write([]byte(responseNotFound)); err != nil {
