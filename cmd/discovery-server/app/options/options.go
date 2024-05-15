@@ -68,7 +68,7 @@ type ResyncOptions struct {
 
 // AddFlags adds the [ResyncOptions] flags to the flagset.
 func (o *ResyncOptions) AddFlags(fs *pflag.FlagSet) {
-	fs.DurationVar(&o.Duration, "resync-period", time.Minute*10, "The period between reconciliations of cluster discovery information.")
+	fs.DurationVar(&o.Duration, "resync-period", time.Minute*30, "The period between reconciliations of cluster discovery information.")
 }
 
 // Validate checks if options are valid.
