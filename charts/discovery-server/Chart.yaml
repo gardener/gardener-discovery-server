@@ -4,7 +4,7 @@
 
 apiVersion: v1
 appVersion: "1.0"
-description: A Helm chart for the Gardener Dsicovery Server
+description: A Helm chart for the Gardener Discovery Server
 name: gardener-discovery-server
 version: 0.1.0
 dependencies:

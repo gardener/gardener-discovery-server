@@ -49,8 +49,7 @@ spec:
         args:
         {{- if .Values.kubeconfig }}
         - --kubeconfig=/etc/gardener-discovery-server/kubeconfig/kubeconfig
-        {{- end }}
-        {{- if .Values.projectedKubeconfig }}
+        {{- else if .Values.projectedKubeconfig }}
         - --kubeconfig={{ required ".Values.projectedKubeconfig.baseMountPath is required" .Values.projectedKubeconfig.baseMountPath }}/kubeconfig
         {{- end }}
         - --tls-cert-file=/var/run/secrets/gardener.cloud/gardener-discovery-server/tls/tls.crt
@@ -67,7 +66,7 @@ spec:
           periodSeconds: 20
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: /readyz
             port: healthz
             scheme: HTTP
           initialDelaySeconds: 5
@@ -76,7 +75,7 @@ spec:
           successThreshold: 1
           periodSeconds: 10
         ports:
-        - name: http
+        - name: https
           containerPort: 10443
           protocol: TCP
         - name: metrics
@@ -97,8 +96,7 @@ spec:
         - name: {{ include "name" . }}-kubeconfig
           mountPath: /etc/gardener-discovery-server/kubeconfig
           readOnly: true
-        {{- end }}
-        {{- if .Values.projectedKubeconfig }}
+        {{- else if .Values.projectedKubeconfig }}
         - name: kubeconfig
           mountPath: {{ required ".Values.projectedKubeconfig.baseMountPath is required" .Values.projectedKubeconfig.baseMountPath }}
           readOnly: true
@@ -113,8 +111,7 @@ spec:
         secret:
           secretName: {{ include "name" . }}-kubeconfig
           defaultMode: 420
-      {{- end }}
-      {{- if .Values.projectedKubeconfig }}
+      {{- else if .Values.projectedKubeconfig }}
       - name: kubeconfig
         projected:
           defaultMode: 420

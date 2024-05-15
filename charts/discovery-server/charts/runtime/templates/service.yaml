@@ -16,7 +16,7 @@ spec:
   selector:
 {{ include "labels" . | indent 4 }}
   ports:
-  - name: http
+  - name: https
     port: 10443
     protocol: TCP
     targetPort: 10443
