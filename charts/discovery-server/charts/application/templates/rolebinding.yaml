@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "name" . }}
+  namespace: gardener-system-shoot-issuer
+  labels:
+{{ include "labels" . | indent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "name" . }}
+subjects:
+{{- if and .Values.global.virtualGarden.enabled .Values.global.virtualGarden.user.name }}
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: {{ .Values.global.virtualGarden.user.name  }}
+{{- else }}
+- kind: ServiceAccount
+  name: {{ include "name" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

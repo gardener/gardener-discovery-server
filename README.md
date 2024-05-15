@@ -19,3 +19,9 @@ You should be able to start the discovery server with the following command.
 ```bash
 make start
 ```
+
+Alternatively you can deploy the discovery server in the local cluster with the following command.
+
+```bash
+make server-up
+```

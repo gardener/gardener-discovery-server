@@ -59,13 +59,14 @@ check-generate:
 	@bash $(GARDENER_HACK_DIR)/check-generate.sh $(REPO_ROOT)
 
 .PHONY: check
-check: $(GOIMPORTS) $(GOLANGCI_LINT) 
+check: $(GOIMPORTS) $(GOLANGCI_LINT) $(HELM)
 	@bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./internal/...
-# @bash $(GARDENER_HACK_DIR)/check-charts.sh ./charts
+	@bash $(GARDENER_HACK_DIR)/check-charts.sh ./charts
+	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) hack/check-skaffold-deps.sh
 
 .PHONY: generate
-generate: $(CONTROLLER_GEN) $(YQ) $(VGOPATH) $(MOCKGEN)
-	@VGOPATH=$(VGOPATH) REPO_ROOT=$(REPO_ROOT) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./cmd/... ./internal/...
+generate: $(CONTROLLER_GEN) $(YQ) $(VGOPATH) $(MOCKGEN) $(HELM)
+	@VGOPATH=$(VGOPATH) REPO_ROOT=$(REPO_ROOT) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./internal/...
 	$(MAKE) format
 
 .PHONY: format
@@ -89,3 +90,15 @@ verify: check format test
 
 .PHONY: verify-extended
 verify-extended: check-generate check format test test-cov test-clean
+
+# use static label for skaffold to prevent rolling all gardener components on every `skaffold` invocation
+server-up server-down: export SKAFFOLD_LABEL = skaffold.dev/run-id=server-local
+
+server-up: $(SKAFFOLD) $(KIND) $(HELM)
+	@LD_FLAGS=$(LD_FLAGS) $(SKAFFOLD) run
+
+server-dev: $(SKAFFOLD) $(HELM)
+	$(SKAFFOLD) dev --cleanup=false --trigger=manual
+
+server-down: $(SKAFFOLD) $(HELM)
+	$(SKAFFOLD) delete

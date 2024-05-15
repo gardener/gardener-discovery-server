@@ -1,0 +1,37 @@
+global:
+  virtualGarden:
+    enabled: false
+    user:
+      name: ""
+
+application:
+  enabled: true
+
+runtime:
+  enabled: true
+
+  image:
+    repository: europe-docker.pkg.dev/gardener-project/public/gardener/gardener-discovery-server
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  # The name of the secret that contains the TLS certificate that will be used by the discovery server.
+  # The secret should contain keys "tls.crt" and "tls.key".
+  tlsSecretName: gardener-discovery-server-tls
+
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+
+  vpa:
+    enabled: true
+    resourcePolicy:
+      minAllowed:
+        memory: 64Mi
+    updatePolicy:
+      updateMode: "Auto"
+
+  kubeconfig:

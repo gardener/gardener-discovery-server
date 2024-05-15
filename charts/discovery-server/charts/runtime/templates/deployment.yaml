@@ -1,0 +1,131 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "labels" . | indent 4 }}
+    high-availability-config.resources.gardener.cloud/type: server
+spec:
+  revisionHistoryLimit: 2
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+{{ include "labels" . | indent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- if .Values.kubeconfig }}
+        checksum/gardener-discovery-server-kubeconfig: {{ include (print $.Template.BasePath "/secret-kubeconfig.yaml") . | sha256sum }}
+        {{- end }}
+      labels:
+        networking.gardener.cloud/to-dns: allowed
+        {{- if .Values.global.virtualGarden.enabled }}
+        networking.resources.gardener.cloud/to-virtual-garden-kube-apiserver-tcp-443: allowed
+        {{- else }}
+        networking.gardener.cloud/to-runtime-apiserver: allowed
+        {{- end }}
+{{ include "labels" . | indent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ include "name" . }}
+      {{- if .Values.kubeconfig }}
+      automountServiceAccountToken: false
+      {{- end }}
+      containers:
+      - name: {{ include "name" . }}
+        image: {{ include "image" .Values.image }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+        {{- if .Values.kubeconfig }}
+        - --kubeconfig=/etc/gardener-discovery-server/kubeconfig/kubeconfig
+        {{- else if .Values.projectedKubeconfig }}
+        - --kubeconfig={{ required ".Values.projectedKubeconfig.baseMountPath is required" .Values.projectedKubeconfig.baseMountPath }}/kubeconfig
+        {{- end }}
+        - --tls-cert-file=/var/run/secrets/gardener.cloud/gardener-discovery-server/tls/tls.crt
+        - --tls-private-key-file=/var/run/secrets/gardener.cloud/gardener-discovery-server/tls/tls.key
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+          periodSeconds: 10
+        ports:
+        - name: https
+          containerPort: 10443
+          protocol: TCP
+        - name: metrics
+          containerPort: 8080
+          protocol: TCP
+        - name: healthz
+          containerPort: 8081
+          protocol: TCP
+{{- if .Values.resources }}
+        resources:
+{{ toYaml .Values.resources | nindent 10 }}
+{{- end }}
+        volumeMounts:
+        - name: {{ include "name" . }}-tls
+          mountPath: /var/run/secrets/gardener.cloud/gardener-discovery-server/tls
+          readOnly: true
+        {{- if .Values.kubeconfig }}
+        - name: {{ include "name" . }}-kubeconfig
+          mountPath: /etc/gardener-discovery-server/kubeconfig
+          readOnly: true
+        {{- else if .Values.projectedKubeconfig }}
+        - name: kubeconfig
+          mountPath: {{ required ".Values.projectedKubeconfig.baseMountPath is required" .Values.projectedKubeconfig.baseMountPath }}
+          readOnly: true
+        {{- end }}
+      volumes:
+      - name: {{ include "name" . }}-tls
+        secret:
+          secretName: {{ required ".Values.tlsSecretName" .Values.tlsSecretName }}
+          defaultMode: 420
+      {{- if .Values.kubeconfig }}
+      - name: {{ include "name" . }}-kubeconfig
+        secret:
+          secretName: {{ include "name" . }}-kubeconfig
+          defaultMode: 420
+      {{- else if .Values.projectedKubeconfig }}
+      - name: kubeconfig
+        projected:
+          defaultMode: 420
+          sources:
+          - secret:
+              items:
+              - key: kubeconfig
+                path: kubeconfig
+              name: {{ required ".Values.projectedKubeconfig.genericKubeconfigSecretName is required" .Values.projectedKubeconfig.genericKubeconfigSecretName }}
+              optional: false
+          - secret:
+              items:
+              - key: token
+                path: token
+              name: {{ required ".Values.projectedKubeconfig.tokenSecretName is required" .Values.projectedKubeconfig.tokenSecretName }}
+              optional: false
+      {{- end }}

@@ -21,4 +21,4 @@ fi
 echo "Generating development certificate..."
 openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -days 365 \
   -nodes -keyout "$cert_dir/tls.key" -out "$cert_dir/tls.crt" \
-  -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+  -subj "/CN=gardener-discovery-server" -addext "subjectAltName=DNS:localhost,DNS:gardener-discovery-server,DNS:gardener-discovery-server.garden,DNS:garden.gardener-discovery-server.garden.svc,DNS:garden.gardener-discovery-server.garden.svc.cluster.local,IP:127.0.0.1"

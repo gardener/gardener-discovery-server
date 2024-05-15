@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+global:
+  virtualGarden:
+    enabled: false
+    user:
+      name: ""
+
+application:
+  enabled: true
+
+runtime:
+  enabled: true
+
+  image:
+    repository: europe-docker.pkg.dev/gardener-project/public/gardener/gardener-discovery-server
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  # The name of the secret that contains the TLS certificate that will be used by the discovery server.
+  # The secret should contain keys "tls.crt" and "tls.key".
+  tlsSecretName: gardener-discovery-server-tls
+
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+
+  vpa:
+    enabled: true
+    resourcePolicy:
+      minAllowed:
+        memory: 64Mi
+    updatePolicy:
+      updateMode: "Auto"
+
+  # Kubeconfig to the target cluster. In-cluster configuration will be used if not specified.
+  kubeconfig:
+
+  # projectedKubeconfig:
+  #   baseMountPath: /var/run/secrets/gardener.cloud
+  #   genericKubeconfigSecretName: generic-token-kubeconfig
+  #   tokenSecretName: access-shoot-gardener-discovery-server
