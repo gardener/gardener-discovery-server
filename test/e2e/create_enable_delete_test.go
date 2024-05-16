@@ -12,11 +12,11 @@ import (
 	"encoding/pem"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-jose/go-jose/v4"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gardener/gardener/test/framework"
@@ -35,13 +35,15 @@ var _ = Describe("Managed Issuer Tests", Label("ManagedIssuer"), func() {
 		Expect(f.CreateShootAndWaitForCreation(ctx, false)).To(Succeed())
 		f.Verify()
 
-		resp, err := getWellKnownForShoot(f.Shoot.ObjectMeta.UID)
+		resp, err := getWellKnownForShoot(parentCtx, f.Shoot.ObjectMeta.UID)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+		resp.Body.Close()
 
-		resp, err = getJWKSForShoot(f.Shoot.ObjectMeta.UID)
+		resp, err = getJWKSForShoot(parentCtx, f.Shoot.ObjectMeta.UID)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+		resp.Body.Close()
 
 		By("Enable Managed Issuer")
 		ctx, cancel = context.WithTimeout(parentCtx, 5*time.Minute)
@@ -49,29 +51,31 @@ var _ = Describe("Managed Issuer Tests", Label("ManagedIssuer"), func() {
 		Expect(f.UpdateShoot(ctx, f.Shoot, addAnnotations)).To(Succeed())
 
 		By("Check that the Discovery Server is able to serve the shoot's OIDC discovery documents")
-		resp, err = getWellKnownForShoot(f.Shoot.ObjectMeta.UID)
+
+		configSecret, err := gardenClusterClientset.CoreV1().Secrets("garden").Get(parentCtx, "shoot-service-account-issuer", metav1.GetOptions{})
+		Expect(err).ToNot(HaveOccurred())
+		hostname := string(configSecret.Data["hostname"])
+		resp, err = getWellKnownForShoot(parentCtx, f.Shoot.ObjectMeta.UID)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
-		defer resp.Body.Close()
 		wellKnownBytes, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
 		Expect(err).ToNot(HaveOccurred())
 		var wellKnown map[string]any
 		Expect(json.Unmarshal(wellKnownBytes, &wellKnown)).To(Succeed())
 		iss, ok := wellKnown["issuer"].(string)
 		Expect(ok).To(BeTrue())
-		Expect(strings.HasPrefix(iss, "https://")).To(BeTrue())
-		Expect(strings.HasSuffix(iss, "/issuer")).To(BeTrue())
+		Expect(iss).To(Equal("https://" + hostname + "/projects/local/shoots/" + string(f.Shoot.ObjectMeta.UID) + "/issuer"))
 		jwksURI, ok := wellKnown["jwks_uri"].(string)
 		Expect(ok).To(BeTrue())
-		Expect(strings.HasPrefix(jwksURI, "https://")).To(BeTrue())
-		Expect(strings.HasSuffix(jwksURI, "/issuer/jwks")).To(BeTrue())
+		Expect(jwksURI).To(Equal("https://" + hostname + "/projects/local/shoots/" + string(f.Shoot.ObjectMeta.UID) + "/issuer/jwks"))
 
-		resp, err = getJWKSForShoot(f.Shoot.ObjectMeta.UID)
+		resp, err = getJWKSForShoot(parentCtx, f.Shoot.ObjectMeta.UID)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-		defer resp.Body.Close()
 		jwks, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
 		Expect(err).ToNot(HaveOccurred())
 
 		keySet := jose.JSONWebKeySet{}
@@ -101,12 +105,14 @@ var _ = Describe("Managed Issuer Tests", Label("ManagedIssuer"), func() {
 		defer cancel()
 		Expect(f.DeleteShootAndWaitForDeletion(ctx, f.Shoot)).To(Succeed())
 
-		resp, err = getWellKnownForShoot(f.Shoot.ObjectMeta.UID)
+		resp, err = getWellKnownForShoot(parentCtx, f.Shoot.ObjectMeta.UID)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+		resp.Body.Close()
 
-		resp, err = getJWKSForShoot(f.Shoot.ObjectMeta.UID)
+		resp, err = getJWKSForShoot(parentCtx, f.Shoot.ObjectMeta.UID)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+		resp.Body.Close()
 	})
 })

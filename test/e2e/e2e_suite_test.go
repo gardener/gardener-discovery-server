@@ -30,9 +30,10 @@ const (
 )
 
 var (
-	cmd             *exec.Cmd
-	parentCtx       = context.Background()
-	discoveryClient *http.Client
+	cmd                    *exec.Cmd
+	parentCtx              = context.Background()
+	discoveryClient        *http.Client
+	gardenClusterClientset *kubernetes.Clientset
 )
 
 var _ = BeforeEach(func() {
@@ -40,6 +41,8 @@ var _ = BeforeEach(func() {
 })
 
 var _ = BeforeSuite(func() {
+	// let's hope that this is stable and does not introduces flakiness
+	// port-forward can be revisited later on if it causes unstable connection during tests
 	cmd = exec.Command("kubectl", "-n", "garden", "port-forward", "service/gardener-discovery-server", "10443:10443")
 	Expect(cmd.Start()).To(Succeed())
 
@@ -49,10 +52,10 @@ var _ = BeforeSuite(func() {
 
 	cfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
 	Expect(err).ToNot(HaveOccurred())
-	clientset, err := kubernetes.NewForConfig(cfg)
+	gardenClusterClientset, err = kubernetes.NewForConfig(cfg)
 	Expect(err).ToNot(HaveOccurred())
 
-	secret, err := clientset.CoreV1().Secrets("garden").Get(parentCtx, "gardener-discovery-server-tls", metav1.GetOptions{})
+	secret, err := gardenClusterClientset.CoreV1().Secrets("garden").Get(parentCtx, "gardener-discovery-server-tls", metav1.GetOptions{})
 	Expect(err).ToNot(HaveOccurred())
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(secret.Data["tls.crt"])

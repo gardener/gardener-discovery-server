@@ -46,12 +46,7 @@ func defaultShoot(generateName string) *gardencorev1beta1.Shoot {
 			SecretBindingName: ptr.To("local"),
 			CloudProfileName:  "local",
 			Kubernetes: gardencorev1beta1.Kubernetes{
-				Version: "1.28.2",
-				Kubelet: &gardencorev1beta1.KubeletConfig{
-					SerializeImagePulls: ptr.To(false),
-					RegistryPullQPS:     ptr.To[int32](10),
-					RegistryBurst:       ptr.To[int32](20),
-				},
+				Version:       "1.28.2",
 				KubeAPIServer: &gardencorev1beta1.KubeAPIServerConfig{},
 			},
 			Networking: &gardencorev1beta1.Networking{
@@ -82,9 +77,9 @@ func addAnnotations(shoot *gardencorev1beta1.Shoot) error {
 	return nil
 }
 
-func getJWKSForShoot(shootUID types.UID) (*http.Response, error) {
+func getJWKSForShoot(ctx context.Context, shootUID types.UID) (*http.Response, error) {
 	uri := discoveryServerBaseURI + "/projects/local/shoots/" + string(shootUID) + "/issuer/jwks"
-	ctx, cancel := context.WithTimeout(parentCtx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 	if err != nil {
@@ -94,9 +89,9 @@ func getJWKSForShoot(shootUID types.UID) (*http.Response, error) {
 	return discoveryClient.Do(req)
 }
 
-func getWellKnownForShoot(shootUID types.UID) (*http.Response, error) {
+func getWellKnownForShoot(ctx context.Context, shootUID types.UID) (*http.Response, error) {
 	uri := discoveryServerBaseURI + "/projects/local/shoots/" + string(shootUID) + "/issuer/.well-known/openid-configuration"
-	ctx, cancel := context.WithTimeout(parentCtx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 	if err != nil {
