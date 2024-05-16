@@ -20,8 +20,9 @@ const (
 	headerContentType = "Content-Type"
 	mimeAppJSON       = "application/json"
 
-	responseNotFound   = `{"code":404,"message":"not found"}`
-	responseBadRequest = `{"code":400,"message":"bad request"}`
+	responseBadRequest       = `{"code":400,"message":"bad request"}`
+	responseNotFound         = `{"code":404,"message":"not found"}`
+	responseMethodNotAllowed = `{"code":405,"message":"method not allowed"}`
 )
 
 // Handler is capable or serving openid discovery documents.
@@ -41,6 +42,16 @@ func New(store store.Reader, log logr.Logger) *Handler {
 // HandleWellKnown handles /.well-known/openid-configuration.
 // It requires "projectName" and "shootUID" as path parameters.
 func (h *Handler) HandleWellKnown(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.Header().Set(headerContentType, mimeAppJSON)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		if _, err := w.Write([]byte(responseMethodNotAllowed)); err != nil {
+			h.log.Error(err, "Failed writing response")
+			return
+		}
+		return
+	}
+
 	shootUID := r.PathValue("shootUID")
 	if _, err := uuid.Parse(shootUID); err != nil {
 		w.Header().Set(headerContentType, mimeAppJSON)
@@ -55,12 +66,7 @@ func (h *Handler) HandleWellKnown(w http.ResponseWriter, r *http.Request) {
 	projectName := r.PathValue("projectName")
 	data, ok := h.store.Read(projectName + "--" + shootUID)
 	if !ok {
-		w.Header().Set(headerContentType, mimeAppJSON)
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte(responseNotFound)); err != nil {
-			h.log.Error(err, "Failed writing response")
-			return
-		}
+		h.HandleNotFound(w, r)
 		return
 	}
 
@@ -75,6 +81,15 @@ func (h *Handler) HandleWellKnown(w http.ResponseWriter, r *http.Request) {
 // HandleJWKS handles JWKS response.
 // It requires "projectName" and "shootUID" as path parameters.
 func (h *Handler) HandleJWKS(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.Header().Set(headerContentType, mimeAppJSON)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		if _, err := w.Write([]byte(responseMethodNotAllowed)); err != nil {
+			h.log.Error(err, "Failed writing response")
+			return
+		}
+		return
+	}
 	shootUID := r.PathValue("shootUID")
 	if _, err := uuid.Parse(shootUID); err != nil {
 		w.Header().Set(headerContentType, mimeAppJSON)
@@ -89,18 +104,23 @@ func (h *Handler) HandleJWKS(w http.ResponseWriter, r *http.Request) {
 	projectName := r.PathValue("projectName")
 	data, ok := h.store.Read(projectName + "--" + shootUID)
 	if !ok {
-		w.Header().Set(headerContentType, mimeAppJSON)
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte(responseNotFound)); err != nil {
-			h.log.Error(err, "Failed writing response")
-			return
-		}
+		h.HandleNotFound(w, r)
 		return
 	}
 
 	w.Header().Set(headerCacheControl, pubCacheControl)
 	w.Header().Set(headerContentType, mimeAppJSON)
 	if _, err := w.Write(data.JWKS); err != nil {
+		h.log.Error(err, "Failed writing response")
+		return
+	}
+}
+
+// HandleNotFound writes a not found response to writer.
+func (h *Handler) HandleNotFound(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set(headerContentType, mimeAppJSON)
+	w.WriteHeader(http.StatusNotFound)
+	if _, err := w.Write([]byte(responseNotFound)); err != nil {
 		h.log.Error(err, "Failed writing response")
 		return
 	}

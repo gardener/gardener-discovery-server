@@ -140,13 +140,14 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 		jwksPath      = "/projects/{projectName}/shoots/{shootUID}/issuer/jwks"
 	)
 	mux.Handle(
-		"GET "+oidConfigPath,
+		oidConfigPath,
 		metrics.InstrumentHandler(oidConfigPath, http.HandlerFunc(h.HandleWellKnown)),
 	)
 	mux.Handle(
-		"GET "+jwksPath,
+		jwksPath,
 		metrics.InstrumentHandler(jwksPath, http.HandlerFunc(h.HandleJWKS)),
 	)
+	mux.Handle("/", http.HandlerFunc(h.HandleNotFound))
 
 	cert, err := dynamiccert.New(
 		opts.Serving.TLSCertFile,
