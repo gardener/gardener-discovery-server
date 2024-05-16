@@ -12,6 +12,7 @@ VERSION                     := $(shell cat "$(REPO_ROOT)/VERSION")
 GOARCH                      ?= $(shell go env GOARCH)
 EFFECTIVE_VERSION           := $(VERSION)-$(shell git rev-parse HEAD)
 LD_FLAGS                    := "-w $(shell bash $(GARDENER_HACK_DIR)/get-build-ld-flags.sh k8s.io/component-base $(REPO_ROOT)/VERSION $(NAME))"
+PARALLEL_E2E_TESTS          := 2
 
 ifneq ($(strip $(shell git status --porcelain 2>/dev/null)),)
 	EFFECTIVE_VERSION := $(EFFECTIVE_VERSION)-dirty
@@ -102,3 +103,9 @@ server-dev: $(SKAFFOLD) $(HELM)
 
 server-down: $(SKAFFOLD) $(HELM)
 	$(SKAFFOLD) delete
+
+test-e2e-local: $(GINKGO) $(KUBECTL)
+	./hack/test-e2e-local.sh --procs=$(PARALLEL_E2E_TESTS) ./test/e2e/...
+
+ci-e2e-kind:
+	./hack/ci-e2e-kind.sh
