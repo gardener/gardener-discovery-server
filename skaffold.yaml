@@ -5,7 +5,7 @@ metadata:
   name: discovery-server
 build:
   artifacts:
-    - image: europe-docker.pkg.dev/gardener-project/public/gardener/gardener-discovery-server
+    - image: local-skaffold/discovery-server
       ko:
         dependencies:
           paths:
@@ -36,8 +36,8 @@ deploy:
           - example/local/values.yaml
         namespace: garden
         setValueTemplates:
-          image.repository: '{{.IMAGE_REPO_europe_docker_pkg_dev_gardener_project_public_gardener_gardener_discovery_server}}'
-          image.tag: '{{.IMAGE_TAG_europe_docker_pkg_dev_gardener_project_public_gardener_gardener_discovery_server}}@{{.IMAGE_DIGEST_europe_docker_pkg_dev_gardener_project_public_gardener_gardener_discovery_server}}'
+          image.repository: '{{.IMAGE_REPO_local_skaffold_discovery_server}}'
+          image.tag: '{{.IMAGE_TAG_local_skaffold_discovery_server}}@{{.IMAGE_DIGEST_local_skaffold_discovery_server}}'
         createNamespace: true
         wait: false
 profiles: []
