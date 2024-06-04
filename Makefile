@@ -60,10 +60,14 @@ check-generate:
 	@bash $(GARDENER_HACK_DIR)/check-generate.sh $(REPO_ROOT)
 
 .PHONY: check
-check: $(GOIMPORTS) $(GOLANGCI_LINT) $(HELM)
+check: $(GOIMPORTS) $(GOLANGCI_LINT) $(HELM) $(YQ)
 	@bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./internal/...
 	@bash $(GARDENER_HACK_DIR)/check-charts.sh ./charts
 	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) hack/check-skaffold-deps.sh
+
+.PHONY: update-skaffold-deps
+update-skaffold-deps: $(YQ)
+	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) hack/check-skaffold-deps.sh update
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) $(YQ) $(VGOPATH) $(MOCKGEN) $(HELM)
