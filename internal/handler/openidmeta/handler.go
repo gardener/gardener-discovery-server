@@ -42,6 +42,7 @@ func New(store store.Reader, log logr.Logger) *Handler {
 // HandleWellKnown handles /.well-known/openid-configuration.
 // It requires "projectName" and "shootUID" as path parameters.
 func (h *Handler) HandleWellKnown(w http.ResponseWriter, r *http.Request) {
+	setHSTS(w)
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		w.Header().Set(headerContentType, mimeAppJSON)
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -81,6 +82,7 @@ func (h *Handler) HandleWellKnown(w http.ResponseWriter, r *http.Request) {
 // HandleJWKS handles JWKS response.
 // It requires "projectName" and "shootUID" as path parameters.
 func (h *Handler) HandleJWKS(w http.ResponseWriter, r *http.Request) {
+	setHSTS(w)
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		w.Header().Set(headerContentType, mimeAppJSON)
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -118,10 +120,17 @@ func (h *Handler) HandleJWKS(w http.ResponseWriter, r *http.Request) {
 
 // HandleNotFound writes a not found response to writer.
 func (h *Handler) HandleNotFound(w http.ResponseWriter, _ *http.Request) {
+	setHSTS(w)
 	w.Header().Set(headerContentType, mimeAppJSON)
 	w.WriteHeader(http.StatusNotFound)
 	if _, err := w.Write([]byte(responseNotFound)); err != nil {
 		h.log.Error(err, "Failed writing response")
 		return
+	}
+}
+
+func setHSTS(w http.ResponseWriter) {
+	if w.Header().Get("Strict-Transport-Security") == "" {
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 	}
 }
