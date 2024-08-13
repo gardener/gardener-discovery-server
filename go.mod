@@ -1,10 +1,11 @@
 module github.com/gardener/gardener-discovery-server
 
-go 1.22.2
+go 1.22.4
+
 toolchain go1.22.5
 
 require (
-	github.com/gardener/gardener v1.100.0
+	github.com/gardener/gardener v1.100.1
 	github.com/go-jose/go-jose/v4 v4.0.4
 	github.com/go-logr/logr v1.4.1
 	github.com/google/uuid v1.6.0
