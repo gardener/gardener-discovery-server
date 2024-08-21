@@ -20,7 +20,7 @@ gardener-discovery-server:
     release:
       steps:
         verify:
-          image: 'golang:1.22.2'
+          image: 'golang:1.23.0'
       traits:
         version:
           preprocess: 'finalize'
