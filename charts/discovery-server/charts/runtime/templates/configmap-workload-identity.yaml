@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+{{- if (and .Values.workloadIdentity.openIDConfig .Values.workloadIdentity.jwks) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "name" . }}-workload-identity
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "labels" . | indent 4 }}
+data:
+  openid-configuration.json: {{ required ".Values.workloadIdentity.openIDConfig is required" .Values.workloadIdentity.openIDConfig }}
+  jwks.json: {{ required ".Values.workloadIdentity.jwks is required" .Values.workloadIdentity.jwks }}
+{{- end }}
