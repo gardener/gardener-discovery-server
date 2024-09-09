@@ -34,7 +34,7 @@ start:
 .PHONY: install
 install:
 	@LD_FLAGS=$(LD_FLAGS) EFFECTIVE_VERSION=$(EFFECTIVE_VERSION) \
-	bash $(GARDENER_HACK_DIR)/install.sh ./...
+		bash $(GARDENER_HACK_DIR)/install.sh ./...
 
 
 .PHONY: docker-images

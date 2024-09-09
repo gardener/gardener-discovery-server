@@ -5,8 +5,13 @@
 package options
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
+	"net/url"
+	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +23,7 @@ import (
 type Options struct {
 	ResyncOptions  ResyncOptions
 	ServingOptions ServingOptions
+	GardenOptions  WorkloadIdentityOptions
 }
 
 // ServingOptions are options applied to the discovery server.
@@ -58,6 +64,98 @@ func (o *ServingOptions) ApplyTo(c *ServingConfig) error {
 
 	c.TLSCertFile = o.TLSCertFile
 	c.TLSKeyFile = o.TLSKeyFile
+	return nil
+}
+
+// WorkloadIdentityOptions holds the options for the workload identity OIDC discovery documents.
+type WorkloadIdentityOptions struct {
+	// OpenIDConfigFile is the path to the file containing the openid configuration.
+	OpenIDConfigFile string
+	// JWKSFile is the path to the file containing the JWKS.
+	JWKSFile string
+}
+
+// WorkloadIdentityConfig holds the configuration regarding the workload identity OIDC discovery documents.
+type WorkloadIdentityConfig struct {
+	// OpenIDConfig is the workload identity openid configuration.
+	OpenIDConfig []byte
+	// JWKS is the workload identity JWKS.
+	JWKS []byte
+	// OpenIDConfigPath is the http path the discovery server makes available the workload identity openid configuration document.
+	OpenIDConfigPath string
+	// JWKSPath is the http path the discovery server makes available the workload identity JWKS document.
+	JWKSPath string
+	// Enabled indicate whether the discovery server should serve workload identity discovery documents or not.
+	Enabled bool
+}
+
+// AddFlags adds workload identity options to  flagset
+func (o *WorkloadIdentityOptions) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&o.OpenIDConfigFile, "workload-identity-openid-config-file", o.OpenIDConfigFile, "Path to garden workload identity openid configuration file.")
+	fs.StringVar(&o.JWKSFile, "workload-identity-jwks-file", o.JWKSFile, "Path to garden workload identity JWKS file.")
+}
+
+// Validate checks if workload identity options are valid.
+func (o *WorkloadIdentityOptions) Validate() []error {
+	errs := []error{}
+
+	if strings.TrimSpace(o.OpenIDConfigFile) == "" && strings.TrimSpace(o.JWKSFile) == "" {
+		return nil
+	}
+
+	if strings.TrimSpace(o.OpenIDConfigFile) == "" {
+		errs = append(errs, errors.New(`flag "workload-identity-openid-config-file" must be set when "workload-identity-jwks-file" is set`))
+	}
+	if strings.TrimSpace(o.JWKSFile) == "" {
+		errs = append(errs, errors.New(`flag "workload-identity-jwks-file" must be set when "workload-identity-openid-config-file" is set`))
+	}
+
+	return errs
+}
+
+// ApplyTo applies the options to the configuration.
+func (o *WorkloadIdentityOptions) ApplyTo(c *WorkloadIdentityConfig) error {
+	if strings.TrimSpace(o.OpenIDConfigFile) == "" {
+		// Serving workload identity discovery documents is optional,
+		// if the flags are not set, this feature is considered disabled
+		c.Enabled = false
+		return nil
+	}
+	c.Enabled = true
+
+	var err error
+	c.OpenIDConfig, err = os.ReadFile(o.OpenIDConfigFile)
+	if err != nil {
+		return err
+	}
+
+	c.JWKS, err = os.ReadFile(o.JWKSFile)
+	if err != nil {
+		return err
+	}
+
+	type config struct {
+		Issuer  string `json:"issuer"`
+		JWKSURI string `json:"jwks_uri"`
+	}
+
+	conf := &config{}
+	if err := json.Unmarshal(c.OpenIDConfig, conf); err != nil {
+		return fmt.Errorf("failed to unmarshal openid configuration, %w", err)
+	}
+
+	issuerURL, err := url.Parse(conf.Issuer)
+	if err != nil {
+		return fmt.Errorf("failed to parse the issuer URL, %w", err)
+	}
+	c.OpenIDConfigPath = issuerURL.EscapedPath() + "/.well-known/openid-configuration"
+
+	jwksURI, err := url.Parse(conf.JWKSURI)
+	if err != nil {
+		return fmt.Errorf("failed to parse JWKS URI, %w", err)
+	}
+	c.JWKSPath = jwksURI.EscapedPath()
+
 	return nil
 }
 
@@ -103,6 +201,7 @@ func NewOptions() *Options {
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.ServingOptions.AddFlags(fs)
 	o.ResyncOptions.AddFlags(fs)
+	o.GardenOptions.AddFlags(fs)
 }
 
 // ApplyTo applies the options to the configuration.
@@ -111,21 +210,27 @@ func (o *Options) ApplyTo(server *Config) error {
 		return err
 	}
 
+	if err := o.GardenOptions.ApplyTo(&server.WorkloadIdentity); err != nil {
+		return err
+	}
+
 	return o.ServingOptions.ApplyTo(&server.Serving)
 }
 
 // Validate checks if options are valid.
 func (o *Options) Validate() []error {
-	return append(
+	return slices.Concat(
 		o.ResyncOptions.Validate(),
-		o.ServingOptions.Validate()...,
+		o.ServingOptions.Validate(),
+		o.GardenOptions.Validate(),
 	)
 }
 
 // Config has all the context to run the discovery server.
 type Config struct {
-	Resync  ResyncConfig
-	Serving ServingConfig
+	Resync           ResyncConfig
+	Serving          ServingConfig
+	WorkloadIdentity WorkloadIdentityConfig
 }
 
 // ServingConfig has the context to run an http server.
