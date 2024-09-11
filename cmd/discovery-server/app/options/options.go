@@ -5,7 +5,6 @@
 package options
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -17,6 +16,8 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+
+	"github.com/gardener/gardener-discovery-server/internal/utils"
 )
 
 // Options contain the server options.
@@ -134,14 +135,9 @@ func (o *WorkloadIdentityOptions) ApplyTo(c *WorkloadIdentityConfig) error {
 		return err
 	}
 
-	type config struct {
-		Issuer  string `json:"issuer"`
-		JWKSURI string `json:"jwks_uri"`
-	}
-
-	conf := &config{}
-	if err := json.Unmarshal(c.OpenIDConfig, conf); err != nil {
-		return fmt.Errorf("failed to unmarshal openid configuration, %w", err)
+	conf, err := utils.LoadOpenIDConfig(c.OpenIDConfig)
+	if err != nil {
+		return err
 	}
 
 	issuerURL, err := url.Parse(conf.Issuer)

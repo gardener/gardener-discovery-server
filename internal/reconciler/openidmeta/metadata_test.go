@@ -32,6 +32,7 @@ import (
 
 	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
 	oidstore "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
+	"github.com/gardener/gardener-discovery-server/internal/utils"
 )
 
 var _ = Describe("#ReconcileOpenIDMeta", func() {
@@ -258,8 +259,7 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 			kid := base64.URLEncoding.EncodeToString(thumb)
 			privateKey.KeyID = kid
 
-			keySet := &jose.JSONWebKeySet{}
-			err = json.Unmarshal(secret.Data["jwks"], keySet)
+			keySet, err := utils.LoadKeySet(secret.Data["jwks"])
 			Expect(err).ToNot(HaveOccurred())
 			keySet.Keys = append(keySet.Keys, privateKey)
 
@@ -270,8 +270,7 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 			Expect(c.Update(ctx, secret)).To(Succeed())
 		}),
 		Entry("jwks contains an invalid key", func() {
-			keySet := &jose.JSONWebKeySet{}
-			err := json.Unmarshal(secret.Data["jwks"], keySet)
+			keySet, err := utils.LoadKeySet(secret.Data["jwks"])
 			Expect(err).ToNot(HaveOccurred())
 
 			// this key will not be unmarshaled successfully
