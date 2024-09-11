@@ -22,9 +22,9 @@ import (
 
 // Options contain the server options.
 type Options struct {
-	ResyncOptions  ResyncOptions
-	ServingOptions ServingOptions
-	GardenOptions  WorkloadIdentityOptions
+	ResyncOptions           ResyncOptions
+	ServingOptions          ServingOptions
+	WorkloadIdentityOptions WorkloadIdentityOptions
 }
 
 // ServingOptions are options applied to the discovery server.
@@ -197,7 +197,7 @@ func NewOptions() *Options {
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.ServingOptions.AddFlags(fs)
 	o.ResyncOptions.AddFlags(fs)
-	o.GardenOptions.AddFlags(fs)
+	o.WorkloadIdentityOptions.AddFlags(fs)
 }
 
 // ApplyTo applies the options to the configuration.
@@ -206,7 +206,7 @@ func (o *Options) ApplyTo(server *Config) error {
 		return err
 	}
 
-	if err := o.GardenOptions.ApplyTo(&server.WorkloadIdentity); err != nil {
+	if err := o.WorkloadIdentityOptions.ApplyTo(&server.WorkloadIdentity); err != nil {
 		return err
 	}
 
@@ -218,7 +218,7 @@ func (o *Options) Validate() []error {
 	return slices.Concat(
 		o.ResyncOptions.Validate(),
 		o.ServingOptions.Validate(),
-		o.GardenOptions.Validate(),
+		o.WorkloadIdentityOptions.Validate(),
 	)
 }
 

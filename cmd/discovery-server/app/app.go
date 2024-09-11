@@ -152,7 +152,7 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 	if conf.WorkloadIdentity.Enabled {
 		gardenHandler, err := workloadidentity.New(conf.WorkloadIdentity.OpenIDConfig, conf.WorkloadIdentity.JWKS, log.WithName("workload-identity"))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create workload identity handler, %w", err)
 		}
 		log.Info("Workload identity handler paths", "well-known", conf.WorkloadIdentity.OpenIDConfigPath, "jwks", conf.WorkloadIdentity.JWKSPath)
 
