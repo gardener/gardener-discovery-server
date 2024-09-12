@@ -54,7 +54,7 @@ func (o *ServingOptions) Validate() []error {
 
 // ApplyTo applies the options to the configuration.
 func (o *ServingOptions) ApplyTo(c *ServingConfig) error {
-	c.Address = net.JoinHostPort(o.Address, strconv.Itoa(int(o.Port)))
+	c.Address = net.JoinHostPort(o.Address, strconv.FormatUint(uint64(o.Port), 10))
 
 	c.TLSCertFile = o.TLSCertFile
 	c.TLSKeyFile = o.TLSKeyFile
