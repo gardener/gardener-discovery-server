@@ -6,9 +6,7 @@ package options
 
 import (
 	"errors"
-	"fmt"
 	"net"
-	"net/url"
 	"os"
 	"slices"
 	"strconv"
@@ -16,8 +14,6 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
-
-	"github.com/gardener/gardener-discovery-server/internal/utils"
 )
 
 // Options contain the server options.
@@ -82,10 +78,6 @@ type WorkloadIdentityConfig struct {
 	OpenIDConfig []byte
 	// JWKS is the workload identity JWKS.
 	JWKS []byte
-	// OpenIDConfigPath is the http path the discovery server makes available the workload identity openid configuration document.
-	OpenIDConfigPath string
-	// JWKSPath is the http path the discovery server makes available the workload identity JWKS document.
-	JWKSPath string
 	// Enabled indicate whether the discovery server should serve workload identity discovery documents or not.
 	Enabled bool
 }
@@ -134,23 +126,6 @@ func (o *WorkloadIdentityOptions) ApplyTo(c *WorkloadIdentityConfig) error {
 	if err != nil {
 		return err
 	}
-
-	conf, err := utils.LoadOpenIDConfig(c.OpenIDConfig)
-	if err != nil {
-		return err
-	}
-
-	issuerURL, err := url.Parse(conf.Issuer)
-	if err != nil {
-		return fmt.Errorf("failed to parse the issuer URL: %w", err)
-	}
-	c.OpenIDConfigPath = issuerURL.EscapedPath() + "/.well-known/openid-configuration"
-
-	jwksURI, err := url.Parse(conf.JWKSURI)
-	if err != nil {
-		return fmt.Errorf("failed to parse JWKS URI: %w", err)
-	}
-	c.JWKSPath = jwksURI.EscapedPath()
 
 	return nil
 }

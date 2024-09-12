@@ -150,19 +150,22 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 	)
 
 	if conf.WorkloadIdentity.Enabled {
+		const (
+			workloadIdentityOpenIDConfigPath = "/garden/workload-identity/issuer/.well-known/openid-configuration"
+			workloadIdentityJWKSPath         = "/garden/workload-identity/issuer/jwks"
+		)
 		gardenHandler, err := workloadidentity.New(conf.WorkloadIdentity.OpenIDConfig, conf.WorkloadIdentity.JWKS, log.WithName("workload-identity"))
 		if err != nil {
 			return fmt.Errorf("failed to create workload identity handler: %w", err)
 		}
-		log.Info("Workload identity handler paths", "well-known", conf.WorkloadIdentity.OpenIDConfigPath, "jwks", conf.WorkloadIdentity.JWKSPath)
 
 		mux.Handle(
-			conf.WorkloadIdentity.OpenIDConfigPath,
-			metrics.InstrumentHandler(conf.WorkloadIdentity.OpenIDConfigPath, http.HandlerFunc(gardenHandler.HandleWellKnown)),
+			workloadIdentityOpenIDConfigPath,
+			metrics.InstrumentHandler(workloadIdentityOpenIDConfigPath, http.HandlerFunc(gardenHandler.HandleWellKnown)),
 		)
 		mux.Handle(
-			conf.WorkloadIdentity.JWKSPath,
-			metrics.InstrumentHandler(conf.WorkloadIdentity.JWKSPath, http.HandlerFunc(gardenHandler.HandleJWKS)),
+			workloadIdentityJWKSPath,
+			metrics.InstrumentHandler(workloadIdentityJWKSPath, http.HandlerFunc(gardenHandler.HandleJWKS)),
 		)
 	}
 
