@@ -30,7 +30,7 @@ func SplitProjectNameAndShootUID(key string) (string, string, error) {
 func LoadKeySet(jwks []byte) (*jose.JSONWebKeySet, error) {
 	keySet := &jose.JSONWebKeySet{}
 	if err := json.Unmarshal(jwks, &keySet); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JWKs, %w", err)
+		return nil, fmt.Errorf("failed to unmarshal JWKS: %w", err)
 	}
 
 	return keySet, nil
@@ -47,7 +47,7 @@ type OpenIDMetadata struct {
 func LoadOpenIDConfig(config []byte) (*OpenIDMetadata, error) {
 	openIDConfig := &OpenIDMetadata{}
 	if err := json.Unmarshal(config, openIDConfig); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal openid configuration, %w", err)
+		return nil, fmt.Errorf("failed to unmarshal openid configuration: %w", err)
 	}
 	return openIDConfig, nil
 }

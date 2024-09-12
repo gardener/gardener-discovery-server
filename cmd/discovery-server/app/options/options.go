@@ -142,13 +142,13 @@ func (o *WorkloadIdentityOptions) ApplyTo(c *WorkloadIdentityConfig) error {
 
 	issuerURL, err := url.Parse(conf.Issuer)
 	if err != nil {
-		return fmt.Errorf("failed to parse the issuer URL, %w", err)
+		return fmt.Errorf("failed to parse the issuer URL: %w", err)
 	}
 	c.OpenIDConfigPath = issuerURL.EscapedPath() + "/.well-known/openid-configuration"
 
 	jwksURI, err := url.Parse(conf.JWKSURI)
 	if err != nil {
-		return fmt.Errorf("failed to parse JWKS URI, %w", err)
+		return fmt.Errorf("failed to parse JWKS URI: %w", err)
 	}
 	c.JWKSPath = jwksURI.EscapedPath()
 

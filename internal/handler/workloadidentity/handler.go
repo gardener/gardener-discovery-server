@@ -41,7 +41,7 @@ func New(openIDConfig, jwks []byte, logger logr.Logger) (*Handler, error) {
 
 	issuerURL, err := url.Parse(conf.Issuer)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse issuer url, %w", err)
+		return nil, fmt.Errorf("failed to parse issuer url: %w", err)
 	}
 	if issuerURL.Scheme != "https" {
 		return nil, errors.New("invalid issuer url scheme")
@@ -55,7 +55,7 @@ func New(openIDConfig, jwks []byte, logger logr.Logger) (*Handler, error) {
 
 	jwksURL, err := url.Parse(conf.JWKSURI)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse jwks url, %w", err)
+		return nil, fmt.Errorf("failed to parse jwks url: %w", err)
 	}
 	if jwksURL.Scheme != "https" {
 		return nil, errors.New("invalid jwks url scheme")

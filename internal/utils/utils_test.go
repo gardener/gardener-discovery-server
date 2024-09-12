@@ -102,7 +102,7 @@ var _ = Describe("Utils", func() {
 			rawJWKS := []byte(`invalid jwks`)
 
 			_, err := utils.LoadKeySet(rawJWKS)
-			Expect(err).To(MatchError(ContainSubstring("failed to unmarshal JWKs")))
+			Expect(err).To(MatchError(ContainSubstring("failed to unmarshal JWKS")))
 		})
 
 	})
