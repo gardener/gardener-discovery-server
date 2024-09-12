@@ -84,7 +84,7 @@ type WorkloadIdentityConfig struct {
 
 // AddFlags adds workload identity options to  flagset
 func (o *WorkloadIdentityOptions) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&o.OpenIDConfigFile, "workload-identity-openid-config-file", o.OpenIDConfigFile, "Path to garden workload identity openid configuration file.")
+	fs.StringVar(&o.OpenIDConfigFile, "workload-identity-openid-configuration-file", o.OpenIDConfigFile, "Path to garden workload identity openid configuration file.")
 	fs.StringVar(&o.JWKSFile, "workload-identity-jwks-file", o.JWKSFile, "Path to garden workload identity JWKS file.")
 }
 
@@ -97,10 +97,10 @@ func (o *WorkloadIdentityOptions) Validate() []error {
 	}
 
 	if strings.TrimSpace(o.OpenIDConfigFile) == "" {
-		errs = append(errs, errors.New(`flag "workload-identity-openid-config-file" must be set when "workload-identity-jwks-file" is set`))
+		errs = append(errs, errors.New(`flag "workload-identity-openid-configuration-file" must be set when "workload-identity-jwks-file" is set`))
 	}
 	if strings.TrimSpace(o.JWKSFile) == "" {
-		errs = append(errs, errors.New(`flag "workload-identity-jwks-file" must be set when "workload-identity-openid-config-file" is set`))
+		errs = append(errs, errors.New(`flag "workload-identity-jwks-file" must be set when "workload-identity-openid-configuration-file" is set`))
 	}
 
 	return errs

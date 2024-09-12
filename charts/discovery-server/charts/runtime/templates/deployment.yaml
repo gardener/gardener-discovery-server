@@ -58,7 +58,7 @@ spec:
         - --tls-cert-file=/var/run/secrets/gardener.cloud/gardener-discovery-server/tls/tls.crt
         - --tls-private-key-file=/var/run/secrets/gardener.cloud/gardener-discovery-server/tls/tls.key
         {{- if (and .Values.workloadIdentity.openIDConfig .Values.workloadIdentity.jwks) }}
-        - --workload-identity-openid-config-file=/etc/gardener-discovery-server/workload-identity/openid-configuration.json
+        - --workload-identity-openid-configuration-file=/etc/gardener-discovery-server/workload-identity/openid-configuration.json
         - --workload-identity-jwks-file=/etc/gardener-discovery-server/workload-identity/jwks.json
         {{- end}}
         livenessProbe:
