@@ -64,8 +64,8 @@ var _ = Describe("#WorkloadIdentity", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		mux = http.NewServeMux()
-		mux.HandleFunc(pathPrefix+"/.well-known/openid-configuration", handler.HandleWellKnown)
-		mux.HandleFunc(pathPrefix+"/jwks", handler.HandleJWKS)
+		mux.Handle(pathPrefix+"/.well-known/openid-configuration", handler.HandleWellKnown())
+		mux.Handle(pathPrefix+"/jwks", handler.HandleJWKS())
 
 		headers = map[string]string{
 			"Strict-Transport-Security": "max-age=31536000",

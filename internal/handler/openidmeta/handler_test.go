@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/gardener/gardener-discovery-server/internal/handler"
 	oidhandler "github.com/gardener/gardener-discovery-server/internal/handler/openidmeta"
 	oidstore "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 )
@@ -25,8 +26,8 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 		uid1 = "a6475c90-d533-43c4-bbb0-d99200b491b1"
 		uid2 = "1e4914ca-c837-451d-a1cf-c559d131cb57"
 
-		handler *oidhandler.Handler
-		mux     *http.ServeMux
+		oidHandler *oidhandler.Handler
+		mux        *http.ServeMux
 	)
 
 	BeforeEach(func() {
@@ -40,11 +41,12 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			JWKS:   []byte("jwks2"),
 		})
 
-		handler = oidhandler.New(store, logzap.New(logzap.WriteTo(GinkgoWriter)))
+		log := logzap.New(logzap.WriteTo(GinkgoWriter))
+		oidHandler = oidhandler.New(store, log)
 		mux = http.NewServeMux()
-		mux.HandleFunc("/projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configuration", handler.HandleWellKnown)
-		mux.HandleFunc("/projects/{projectName}/shoots/{shootUID}/issuer/jwks", handler.HandleJWKS)
-		mux.HandleFunc("/", handler.HandleNotFound)
+		mux.Handle("/projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configuration", oidHandler.HandleWellKnown())
+		mux.Handle("/projects/{projectName}/shoots/{shootUID}/issuer/jwks", oidHandler.HandleJWKS())
+		mux.Handle("/", handler.HandleNotFound(log))
 	})
 
 	DescribeTable(

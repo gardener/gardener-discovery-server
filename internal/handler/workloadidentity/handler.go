@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-logr/logr"
 
+	"github.com/gardener/gardener-discovery-server/internal/handler"
 	"github.com/gardener/gardener-discovery-server/internal/utils"
 )
 
@@ -21,8 +22,6 @@ const (
 
 	headerContentType = "Content-Type"
 	mimeAppJSON       = "application/json"
-
-	responseMethodNotAllowed = `{"code":405,"message":"method not allowed"}`
 )
 
 // Handler implements handler functions for the openid configuration and JWKS endpoints.
@@ -80,45 +79,33 @@ func New(openIDConfig, jwks []byte, logger logr.Logger) (*Handler, error) {
 }
 
 // HandleWellKnown handles /.well-known/openid-configuration.
-func (h *Handler) HandleWellKnown(w http.ResponseWriter, r *http.Request) {
-	handleRequest(h.log.WithName("well-known"), h.oidc, w, r)
+func (h *Handler) HandleWellKnown() http.Handler {
+	log := h.log.WithName("well-known")
+	return handler.SetHSTS(
+		handler.AllowMethods(handleRequest(log, h.oidc),
+			log, http.MethodGet, http.MethodHead,
+		),
+	)
 }
 
 // HandleJWKS handles JWKS response.
-func (h *Handler) HandleJWKS(w http.ResponseWriter, r *http.Request) {
-	handleRequest(h.log.WithName("jwks"), h.jwks, w, r)
+func (h *Handler) HandleJWKS() http.Handler {
+	log := h.log.WithName("jwks")
+	return handler.SetHSTS(
+		handler.AllowMethods(handleRequest(log, h.jwks),
+			log, http.MethodGet, http.MethodHead,
+		),
+	)
 }
 
-func handleRequest(logger logr.Logger, responseData []byte, w http.ResponseWriter, r *http.Request) {
-	if w.Header().Get("Strict-Transport-Security") == "" {
-		w.Header().Set("Strict-Transport-Security", "max-age=31536000")
-	}
+func handleRequest(log logr.Logger, responseData []byte) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set(headerCacheControl, pubCacheControl)
+		w.Header().Set(headerContentType, mimeAppJSON)
 
-	if isValid := handleInvalidRequest(logger, w, r); !isValid {
-		return
-	}
-
-	w.Header().Set(headerCacheControl, pubCacheControl)
-	w.Header().Set(headerContentType, mimeAppJSON)
-
-	if _, err := w.Write(responseData); err != nil {
-		logger.Error(err, "Failed writing response")
-		return
-	}
-}
-
-// handleInvalidRequest handles invalid requests.
-// It returns true if the request is valid, and false otherwise.
-func handleInvalidRequest(logger logr.Logger, w http.ResponseWriter, r *http.Request) bool {
-	if r.Method == http.MethodGet || r.Method == http.MethodHead {
-		return true
-	}
-
-	w.Header().Set(headerContentType, mimeAppJSON)
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	if _, err := w.Write([]byte(responseMethodNotAllowed)); err != nil {
-		logger.Error(err, "Failed writing method not allowed response")
-		return false
-	}
-	return false
+		if _, err := w.Write(responseData); err != nil {
+			log.Error(err, "Failed writing response")
+			return
+		}
+	})
 }

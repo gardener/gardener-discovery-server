@@ -35,6 +35,7 @@ import (
 
 	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app/options"
 	"github.com/gardener/gardener-discovery-server/internal/dynamiccert"
+	"github.com/gardener/gardener-discovery-server/internal/handler"
 	oidhandler "github.com/gardener/gardener-discovery-server/internal/handler/openidmeta"
 	"github.com/gardener/gardener-discovery-server/internal/handler/workloadidentity"
 	"github.com/gardener/gardener-discovery-server/internal/metrics"
@@ -142,11 +143,11 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 	)
 	mux.Handle(
 		oidConfigPath,
-		metrics.InstrumentHandler(oidConfigPath, http.HandlerFunc(h.HandleWellKnown)),
+		metrics.InstrumentHandler(oidConfigPath, h.HandleWellKnown()),
 	)
 	mux.Handle(
 		jwksPath,
-		metrics.InstrumentHandler(jwksPath, http.HandlerFunc(h.HandleJWKS)),
+		metrics.InstrumentHandler(jwksPath, h.HandleJWKS()),
 	)
 
 	if conf.WorkloadIdentity.Enabled {
@@ -154,22 +155,22 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 			workloadIdentityOpenIDConfigPath = "/garden/workload-identity/issuer/.well-known/openid-configuration"
 			workloadIdentityJWKSPath         = "/garden/workload-identity/issuer/jwks"
 		)
-		gardenHandler, err := workloadidentity.New(conf.WorkloadIdentity.OpenIDConfig, conf.WorkloadIdentity.JWKS, log.WithName("workload-identity"))
+		workloadIdentityHandler, err := workloadidentity.New(conf.WorkloadIdentity.OpenIDConfig, conf.WorkloadIdentity.JWKS, log.WithName("workload-identity"))
 		if err != nil {
 			return fmt.Errorf("failed to create workload identity handler: %w", err)
 		}
 
 		mux.Handle(
 			workloadIdentityOpenIDConfigPath,
-			metrics.InstrumentHandler(workloadIdentityOpenIDConfigPath, http.HandlerFunc(gardenHandler.HandleWellKnown)),
+			metrics.InstrumentHandler(workloadIdentityOpenIDConfigPath, workloadIdentityHandler.HandleWellKnown()),
 		)
 		mux.Handle(
 			workloadIdentityJWKSPath,
-			metrics.InstrumentHandler(workloadIdentityJWKSPath, http.HandlerFunc(gardenHandler.HandleJWKS)),
+			metrics.InstrumentHandler(workloadIdentityJWKSPath, workloadIdentityHandler.HandleJWKS()),
 		)
 	}
 
-	mux.Handle("/", http.HandlerFunc(h.HandleNotFound))
+	mux.Handle("/", handler.HandleNotFound(log))
 
 	cert, err := dynamiccert.New(
 		conf.Serving.TLSCertFile,
