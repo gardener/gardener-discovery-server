@@ -94,7 +94,7 @@ func handleRequest(logger logr.Logger, responseData []byte, w http.ResponseWrite
 		w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 	}
 
-	if isValid := handleInvalidRequest(logger.WithName("invalid-request-handler"), w, r); !isValid {
+	if isValid := handleInvalidRequest(logger, w, r); !isValid {
 		return
 	}
 
@@ -117,7 +117,7 @@ func handleInvalidRequest(logger logr.Logger, w http.ResponseWriter, r *http.Req
 	w.Header().Set(headerContentType, mimeAppJSON)
 	w.WriteHeader(http.StatusMethodNotAllowed)
 	if _, err := w.Write([]byte(responseMethodNotAllowed)); err != nil {
-		logger.Error(err, "Failed writing response")
+		logger.Error(err, "Failed writing method not allowed response")
 		return false
 	}
 	return false
