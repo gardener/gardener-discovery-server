@@ -143,7 +143,7 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 	)
 	mux.Handle(
 		oidConfigPath,
-		metrics.InstrumentHandler(oidConfigPath, h.HandleWellKnown()),
+		metrics.InstrumentHandler(oidConfigPath, h.HandleOpenIDConfiguration()),
 	)
 	mux.Handle(
 		jwksPath,
@@ -162,7 +162,7 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 
 		mux.Handle(
 			workloadIdentityOpenIDConfigPath,
-			metrics.InstrumentHandler(workloadIdentityOpenIDConfigPath, workloadIdentityHandler.HandleWellKnown()),
+			metrics.InstrumentHandler(workloadIdentityOpenIDConfigPath, workloadIdentityHandler.HandleOpenIDConfiguration()),
 		)
 		mux.Handle(
 			workloadIdentityJWKSPath,
@@ -170,7 +170,7 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 		)
 	}
 
-	mux.Handle("/", handler.HandleNotFound(log))
+	mux.Handle("/", handler.SetHSTS(handler.NotFound(log)))
 
 	cert, err := dynamiccert.New(
 		conf.Serving.TLSCertFile,

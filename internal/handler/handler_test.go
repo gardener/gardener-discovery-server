@@ -82,18 +82,17 @@ var _ = Describe("#Handler", func() {
 		})
 	})
 
-	Describe("#HandleNotFound", func() {
+	Describe("#NotFound", func() {
 		It("should return not found", func() {
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			resp := httptest.NewRecorder()
 
-			h := handler.HandleNotFound(log)
+			h := handler.NotFound(log)
 
 			h.ServeHTTP(resp, req)
 			Expect(resp).To(HaveHTTPStatus(http.StatusNotFound))
 			Expect(resp).To(HaveHTTPHeaderWithValue("Content-Type", "application/json"))
 			Expect(resp).To(HaveHTTPBody(`{"code":404,"message":"not found"}`))
-			Expect(resp).To(HaveHTTPHeaderWithValue("Strict-Transport-Security", "max-age=31536000"))
 		})
 	})
 })

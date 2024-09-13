@@ -44,9 +44,9 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 		log := logzap.New(logzap.WriteTo(GinkgoWriter))
 		oidHandler = oidhandler.New(store, log)
 		mux = http.NewServeMux()
-		mux.Handle("/projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configuration", oidHandler.HandleWellKnown())
+		mux.Handle("/projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configuration", oidHandler.HandleOpenIDConfiguration())
 		mux.Handle("/projects/{projectName}/shoots/{shootUID}/issuer/jwks", oidHandler.HandleJWKS())
-		mux.Handle("/", handler.HandleNotFound(log))
+		mux.Handle("/", handler.NotFound(log))
 	})
 
 	DescribeTable(
@@ -162,12 +162,11 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			404,
 			[]byte(`{"code":404,"message":"not found"}`),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
-				"Content-Type":              "application/json",
+				"Content-Type": "application/json",
 			},
 		),
 		Entry(
-			"should return method not allowed when querying the well-known endpoint with POST",
+			"should return method not allowed when querying the openid-configuration endpoint with POST",
 			http.MethodPost,
 			"https://abc.def/projects/foo/shoots/1e4914ca-c837-451d-a1cf-c559d131cb57/issuer/.well-known/openid-configuration",
 			405,

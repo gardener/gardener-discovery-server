@@ -64,7 +64,7 @@ var _ = Describe("#WorkloadIdentity", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		mux = http.NewServeMux()
-		mux.Handle(pathPrefix+"/.well-known/openid-configuration", handler.HandleWellKnown())
+		mux.Handle(pathPrefix+"/.well-known/openid-configuration", handler.HandleOpenIDConfiguration())
 		mux.Handle(pathPrefix+"/jwks", handler.HandleJWKS())
 
 		headers = map[string]string{

@@ -20,10 +20,10 @@ const (
 
 	headerContentType = "Content-Type"
 	mimeAppJSON       = "application/json"
+)
 
-	responseBadRequest       = `{"code":400,"message":"bad request"}`
-	responseNotFound         = `{"code":404,"message":"not found"}`
-	responseMethodNotAllowed = `{"code":405,"message":"method not allowed"}`
+var (
+	responseBadRequest = []byte(`{"code":400,"message":"bad request"}`)
 )
 
 // Handler is capable or serving openid discovery documents.
@@ -40,10 +40,10 @@ func New(store store.Reader, log logr.Logger) *Handler {
 	}
 }
 
-// HandleWellKnown handles /.well-known/openid-configuration.
+// HandleOpenIDConfiguration handles /.well-known/openid-configuration.
 // It requires "projectName" and "shootUID" as path parameters.
-func (h *Handler) HandleWellKnown() http.Handler {
-	log := h.log.WithName("well-known")
+func (h *Handler) HandleOpenIDConfiguration() http.Handler {
+	log := h.log.WithName("openid-configuration")
 	return handler.SetHSTS(
 		handler.AllowMethods(handleRequest(log, h.store,
 			func(data store.Data) []byte { return data.Config },
@@ -65,13 +65,14 @@ func (h *Handler) HandleJWKS() http.Handler {
 		),
 	)
 }
+
 func handleRequest(log logr.Logger, s store.Reader, getContent func(store.Data) []byte) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		shootUID := r.PathValue("shootUID")
 		if _, err := uuid.Parse(shootUID); err != nil {
 			w.Header().Set(headerContentType, mimeAppJSON)
 			w.WriteHeader(http.StatusBadRequest)
-			if _, err := w.Write([]byte(responseBadRequest)); err != nil {
+			if _, err := w.Write(responseBadRequest); err != nil {
 				log.Error(err, "Failed writing bad request response")
 				return
 			}
@@ -81,7 +82,7 @@ func handleRequest(log logr.Logger, s store.Reader, getContent func(store.Data) 
 		projectName := r.PathValue("projectName")
 		data, ok := s.Read(projectName + "--" + shootUID)
 		if !ok {
-			handler.HandleNotFound(log).ServeHTTP(w, r)
+			handler.NotFound(log).ServeHTTP(w, r)
 			return
 		}
 

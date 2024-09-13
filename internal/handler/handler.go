@@ -6,7 +6,7 @@ package handler
 
 import (
 	"net/http"
-	"slices"
+	"sync"
 
 	"github.com/go-logr/logr"
 )
@@ -28,10 +28,15 @@ func SetHSTS(next http.Handler) http.Handler {
 
 // AllowMethods is middleware handler restricting the allowed http methods.
 func AllowMethods(next http.Handler, log logr.Logger, allowedMethods ...string) http.Handler {
-	var responseMethodNotAllowed = []byte(`{"code":405,"message":"method not allowed"}`)
-
+	var (
+		responseMethodNotAllowed = []byte(`{"code":405,"message":"method not allowed"}`)
+		methods                  = sync.Map{}
+	)
+	for _, m := range allowedMethods {
+		methods.Store(m, struct{}{})
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !slices.Contains(allowedMethods, r.Method) {
+		if _, ok := methods.Load(r.Method); !ok {
 			w.Header().Set(headerContentType, mimeAppJSON)
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			if _, err := w.Write(responseMethodNotAllowed); err != nil {
@@ -44,18 +49,16 @@ func AllowMethods(next http.Handler, log logr.Logger, allowedMethods ...string) 
 	})
 }
 
-// HandleNotFound is handler replying with not found.
-func HandleNotFound(log logr.Logger) http.Handler {
+// NotFound is handler replying with not found.
+func NotFound(log logr.Logger) http.Handler {
 	var responseNotFound = []byte(`{"code":404,"message":"not found"}`)
 
-	return SetHSTS(
-		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set(headerContentType, mimeAppJSON)
-			w.WriteHeader(http.StatusNotFound)
-			if _, err := w.Write(responseNotFound); err != nil {
-				log.Error(err, "Failed writing not found response")
-				return
-			}
-		}),
-	)
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set(headerContentType, mimeAppJSON)
+		w.WriteHeader(http.StatusNotFound)
+		if _, err := w.Write(responseNotFound); err != nil {
+			log.Error(err, "Failed writing not found response")
+			return
+		}
+	})
 }

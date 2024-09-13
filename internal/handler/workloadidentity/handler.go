@@ -78,9 +78,9 @@ func New(openIDConfig, jwks []byte, logger logr.Logger) (*Handler, error) {
 	}, nil
 }
 
-// HandleWellKnown handles /.well-known/openid-configuration.
-func (h *Handler) HandleWellKnown() http.Handler {
-	log := h.log.WithName("well-known")
+// HandleOpenIDConfiguration handles /.well-known/openid-configuration.
+func (h *Handler) HandleOpenIDConfiguration() http.Handler {
+	log := h.log.WithName("openid-configuration")
 	return handler.SetHSTS(
 		handler.AllowMethods(handleRequest(log, h.oidc),
 			log, http.MethodGet, http.MethodHead,
