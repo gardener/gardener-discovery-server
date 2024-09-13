@@ -5,8 +5,12 @@
 package utils
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
+
+	"github.com/go-jose/go-jose/v4"
 )
 
 // ErrProjShootUIDInvalidFormat is an error that is returned if
@@ -20,4 +24,30 @@ func SplitProjectNameAndShootUID(key string) (string, string, error) {
 		return "", "", ErrProjShootUIDInvalidFormat
 	}
 	return split[0], split[1], nil
+}
+
+// LoadKeySet parses the jwks key set.
+func LoadKeySet(jwks []byte) (*jose.JSONWebKeySet, error) {
+	keySet := &jose.JSONWebKeySet{}
+	if err := json.Unmarshal(jwks, &keySet); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JWKS: %w", err)
+	}
+
+	return keySet, nil
+}
+
+// OpenIDMetadata is a minimal struct allowing to parse the issuer and jwks URIs
+// from the OIDC discovery page.
+type OpenIDMetadata struct {
+	Issuer  string `json:"issuer"`
+	JWKSURI string `json:"jwks_uri"`
+}
+
+// LoadOpenIDConfig parses the openid configuration page.
+func LoadOpenIDConfig(config []byte) (*OpenIDMetadata, error) {
+	openIDConfig := &OpenIDMetadata{}
+	if err := json.Unmarshal(config, openIDConfig); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal openid configuration: %w", err)
+	}
+	return openIDConfig, nil
 }

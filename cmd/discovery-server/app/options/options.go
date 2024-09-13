@@ -7,6 +7,8 @@ package options
 import (
 	"errors"
 	"net"
+	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -16,8 +18,9 @@ import (
 
 // Options contain the server options.
 type Options struct {
-	ResyncOptions  ResyncOptions
-	ServingOptions ServingOptions
+	ResyncOptions           ResyncOptions
+	ServingOptions          ServingOptions
+	WorkloadIdentityOptions WorkloadIdentityOptions
 }
 
 // ServingOptions are options applied to the discovery server.
@@ -58,6 +61,72 @@ func (o *ServingOptions) ApplyTo(c *ServingConfig) error {
 
 	c.TLSCertFile = o.TLSCertFile
 	c.TLSKeyFile = o.TLSKeyFile
+	return nil
+}
+
+// WorkloadIdentityOptions holds the options for the workload identity OIDC discovery documents.
+type WorkloadIdentityOptions struct {
+	// OpenIDConfigFile is the path to the file containing the openid configuration.
+	OpenIDConfigFile string
+	// JWKSFile is the path to the file containing the JWKS.
+	JWKSFile string
+}
+
+// WorkloadIdentityConfig holds the configuration regarding the workload identity OIDC discovery documents.
+type WorkloadIdentityConfig struct {
+	// OpenIDConfig is the workload identity openid configuration.
+	OpenIDConfig []byte
+	// JWKS is the workload identity JWKS.
+	JWKS []byte
+	// Enabled indicate whether the discovery server should serve workload identity discovery documents or not.
+	Enabled bool
+}
+
+// AddFlags adds workload identity options to  flagset
+func (o *WorkloadIdentityOptions) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&o.OpenIDConfigFile, "workload-identity-openid-configuration-file", o.OpenIDConfigFile, "Path to garden workload identity openid configuration file.")
+	fs.StringVar(&o.JWKSFile, "workload-identity-jwks-file", o.JWKSFile, "Path to garden workload identity JWKS file.")
+}
+
+// Validate checks if workload identity options are valid.
+func (o *WorkloadIdentityOptions) Validate() []error {
+	errs := []error{}
+
+	if strings.TrimSpace(o.OpenIDConfigFile) == "" && strings.TrimSpace(o.JWKSFile) == "" {
+		return nil
+	}
+
+	if strings.TrimSpace(o.OpenIDConfigFile) == "" {
+		errs = append(errs, errors.New(`flag "workload-identity-openid-configuration-file" must be set when "workload-identity-jwks-file" is set`))
+	}
+	if strings.TrimSpace(o.JWKSFile) == "" {
+		errs = append(errs, errors.New(`flag "workload-identity-jwks-file" must be set when "workload-identity-openid-configuration-file" is set`))
+	}
+
+	return errs
+}
+
+// ApplyTo applies the options to the configuration.
+func (o *WorkloadIdentityOptions) ApplyTo(c *WorkloadIdentityConfig) error {
+	if strings.TrimSpace(o.OpenIDConfigFile) == "" {
+		// Serving workload identity discovery documents is optional,
+		// if the flags are not set, this feature is considered disabled
+		c.Enabled = false
+		return nil
+	}
+	c.Enabled = true
+
+	var err error
+	c.OpenIDConfig, err = os.ReadFile(o.OpenIDConfigFile)
+	if err != nil {
+		return err
+	}
+
+	c.JWKS, err = os.ReadFile(o.JWKSFile)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -103,6 +172,7 @@ func NewOptions() *Options {
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.ServingOptions.AddFlags(fs)
 	o.ResyncOptions.AddFlags(fs)
+	o.WorkloadIdentityOptions.AddFlags(fs)
 }
 
 // ApplyTo applies the options to the configuration.
@@ -111,21 +181,27 @@ func (o *Options) ApplyTo(server *Config) error {
 		return err
 	}
 
+	if err := o.WorkloadIdentityOptions.ApplyTo(&server.WorkloadIdentity); err != nil {
+		return err
+	}
+
 	return o.ServingOptions.ApplyTo(&server.Serving)
 }
 
 // Validate checks if options are valid.
 func (o *Options) Validate() []error {
-	return append(
+	return slices.Concat(
 		o.ResyncOptions.Validate(),
-		o.ServingOptions.Validate()...,
+		o.ServingOptions.Validate(),
+		o.WorkloadIdentityOptions.Validate(),
 	)
 }
 
 // Config has all the context to run the discovery server.
 type Config struct {
-	Resync  ResyncConfig
-	Serving ServingConfig
+	Resync           ResyncConfig
+	Serving          ServingConfig
+	WorkloadIdentity WorkloadIdentityConfig
 }
 
 // ServingConfig has the context to run an http server.

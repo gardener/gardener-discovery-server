@@ -39,3 +39,7 @@ kubeconfig:
 #   baseMountPath: /var/run/secrets/gardener.cloud
 #   genericKubeconfigSecretName: generic-token-kubeconfig
 #   tokenSecretName: access-shoot-gardener-discovery-server
+
+workloadIdentity:
+  openIDConfig:
+  jwks:

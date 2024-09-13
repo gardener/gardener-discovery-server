@@ -6,14 +6,12 @@ package openidmeta
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"time"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/controllerutils"
-	"github.com/go-jose/go-jose/v4"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -179,8 +177,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// a best effort check to ensure that URIs use https
-	var cfg config
-	err = json.Unmarshal(secret.Data[openidConfigKey], &cfg)
+	cfg, err := utils.LoadOpenIDConfig(secret.Data[openidConfigKey])
 	if err != nil {
 		log.Error(err, "Removing metadata from store - cannot unmarshal openid-config")
 		r.Store.Delete(req.Name)
@@ -195,7 +192,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return reconcile.Result{}, nil
 	}
 
-	keySet, err := loadKeySet(secret.Data[jwksKey])
+	keySet, err := utils.LoadKeySet(secret.Data[jwksKey])
 	if err != nil {
 		log.Error(err, "Removing metadata from store - failed parsing JWKS")
 		r.Store.Delete(req.Name)
@@ -228,20 +225,4 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	})
 
 	return ctrl.Result{RequeueAfter: r.ResyncPeriod}, nil
-}
-
-type config struct {
-	Issuer  string `json:"issuer"`
-	JWKSURI string `json:"jwks_uri"`
-}
-
-// loadKeySet parses the jwks key set.
-func loadKeySet(jwks []byte) (*jose.JSONWebKeySet, error) {
-	var keySet jose.JSONWebKeySet
-	err := json.Unmarshal(jwks, &keySet)
-	if err != nil {
-		return nil, err
-	}
-
-	return &keySet, nil
 }

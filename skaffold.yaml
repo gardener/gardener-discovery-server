@@ -13,7 +13,9 @@ build:
             - cmd/discovery-server/app
             - cmd/discovery-server/app/options
             - internal/dynamiccert
+            - internal/handler
             - internal/handler/openidmeta
+            - internal/handler/workloadidentity
             - internal/metrics
             - internal/reconciler/openidmeta
             - internal/store/openidmeta

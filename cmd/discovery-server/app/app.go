@@ -35,7 +35,9 @@ import (
 
 	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app/options"
 	"github.com/gardener/gardener-discovery-server/internal/dynamiccert"
+	"github.com/gardener/gardener-discovery-server/internal/handler"
 	oidhandler "github.com/gardener/gardener-discovery-server/internal/handler/openidmeta"
+	"github.com/gardener/gardener-discovery-server/internal/handler/workloadidentity"
 	"github.com/gardener/gardener-discovery-server/internal/metrics"
 	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
 	store "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
@@ -84,7 +86,7 @@ func NewCommand() *cobra.Command {
 	return cmd
 }
 
-func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
+func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 	cfg, err := ctrl.GetConfig()
 	if err != nil {
 		return err
@@ -126,7 +128,7 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 
 	store := store.NewStore()
 	if err := (&oidreconciler.Reconciler{
-		ResyncPeriod: opts.Resync.Duration,
+		ResyncPeriod: conf.Resync.Duration,
 		Store:        store,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller: %w", err)
@@ -141,17 +143,38 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 	)
 	mux.Handle(
 		oidConfigPath,
-		metrics.InstrumentHandler(oidConfigPath, http.HandlerFunc(h.HandleWellKnown)),
+		metrics.InstrumentHandler(oidConfigPath, h.HandleOpenIDConfiguration()),
 	)
 	mux.Handle(
 		jwksPath,
-		metrics.InstrumentHandler(jwksPath, http.HandlerFunc(h.HandleJWKS)),
+		metrics.InstrumentHandler(jwksPath, h.HandleJWKS()),
 	)
-	mux.Handle("/", http.HandlerFunc(h.HandleNotFound))
+
+	if conf.WorkloadIdentity.Enabled {
+		const (
+			workloadIdentityOpenIDConfigPath = "/garden/workload-identity/issuer/.well-known/openid-configuration"
+			workloadIdentityJWKSPath         = "/garden/workload-identity/issuer/jwks"
+		)
+		workloadIdentityHandler, err := workloadidentity.New(conf.WorkloadIdentity.OpenIDConfig, conf.WorkloadIdentity.JWKS, log.WithName("workload-identity"))
+		if err != nil {
+			return fmt.Errorf("failed to create workload identity handler: %w", err)
+		}
+
+		mux.Handle(
+			workloadIdentityOpenIDConfigPath,
+			metrics.InstrumentHandler(workloadIdentityOpenIDConfigPath, workloadIdentityHandler.HandleOpenIDConfiguration()),
+		)
+		mux.Handle(
+			workloadIdentityJWKSPath,
+			metrics.InstrumentHandler(workloadIdentityJWKSPath, workloadIdentityHandler.HandleJWKS()),
+		)
+	}
+
+	mux.Handle("/", handler.SetHSTS(handler.NotFound(log)))
 
 	cert, err := dynamiccert.New(
-		opts.Serving.TLSCertFile,
-		opts.Serving.TLSKeyFile,
+		conf.Serving.TLSCertFile,
+		conf.Serving.TLSKeyFile,
 		dynamiccert.WithLogger(log.WithName("dynamic-cert")),
 		dynamiccert.WithRefreshInterval(5*time.Minute),
 	)
@@ -160,7 +183,7 @@ func run(ctx context.Context, log logr.Logger, opts *options.Config) error {
 	}
 
 	srv := &http.Server{
-		Addr:    opts.Serving.Address,
+		Addr:    conf.Serving.Address,
 		Handler: mux,
 		TLSConfig: &tls.Config{
 			GetCertificate: cert.GetCertificate,

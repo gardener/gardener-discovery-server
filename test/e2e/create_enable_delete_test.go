@@ -14,11 +14,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-jose/go-jose/v4"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/gardener/gardener-discovery-server/internal/utils"
 	"github.com/gardener/gardener/test/framework"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -78,8 +78,8 @@ var _ = Describe("Managed Issuer Tests", Label("ManagedIssuer"), func() {
 		resp.Body.Close()
 		Expect(err).ToNot(HaveOccurred())
 
-		keySet := jose.JSONWebKeySet{}
-		Expect(json.Unmarshal(jwks, &keySet)).To(Succeed())
+		keySet, err := utils.LoadKeySet(jwks)
+		Expect(err).ToNot(HaveOccurred())
 		Expect(keySet.Keys).To(HaveLen(1))
 		pubKey, ok := (keySet.Keys[0].Key).(*rsa.PublicKey)
 		Expect(ok).To(BeTrue())
