@@ -33,7 +33,7 @@ func AllowMethods(next http.Handler, log logr.Logger, allowedMethods ...string) 
 		methods                  = sync.Map{}
 	)
 	for _, m := range allowedMethods {
-		methods.Store(m, struct{}{})
+		methods.Store(m, nil)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := methods.Load(r.Method); !ok {
