@@ -111,6 +111,7 @@ spec:
         {{- if (and .Values.workloadIdentity.openIDConfig .Values.workloadIdentity.jwks) }}
         - name: workload-identity
           mountPath: /etc/gardener-discovery-server/workload-identity
+          readOnly: true
         {{- end }}
       volumes:
       - name: {{ include "name" . }}-tls
@@ -143,5 +144,6 @@ spec:
       {{- if (and .Values.workloadIdentity.openIDConfig .Values.workloadIdentity.jwks) }}
       - name: workload-identity
         configMap:
-          configMapName: {{ include "name" . }}-workload-identity
+          name: {{ include "name" . }}-workload-identity
+          defaultMode: 420
       {{- end }}
