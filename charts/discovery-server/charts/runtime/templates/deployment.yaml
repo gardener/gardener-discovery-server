@@ -23,7 +23,7 @@ spec:
         checksum/gardener-discovery-server-kubeconfig: {{ include (print $.Template.BasePath "/secret-kubeconfig.yaml") . | sha256sum }}
         {{- end }}
         {{- if (and .Values.workloadIdentity.openIDConfig .Values.workloadIdentity.jwks) }}
-        checksum/gardener-discovery-server-workload-identity: {{ include (print $.Template.BasePath "/configmap-workload-identity.yaml") . | sha256sum }}
+        checksum/gardener-discovery-server-workload-identity: {{ include (print $.Template.BasePath "/secret-workload-identity.yaml") . | sha256sum }}
         {{- end }}
       labels:
         networking.gardener.cloud/to-dns: allowed
@@ -143,7 +143,7 @@ spec:
       {{- end }}
       {{- if (and .Values.workloadIdentity.openIDConfig .Values.workloadIdentity.jwks) }}
       - name: workload-identity
-        configMap:
-          name: {{ include "name" . }}-workload-identity
+        secret:
+          secretName: {{ include "name" . }}-workload-identity
           defaultMode: 420
       {{- end }}
