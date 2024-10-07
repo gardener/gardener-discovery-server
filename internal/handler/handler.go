@@ -20,7 +20,7 @@ const (
 func SetHSTS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if w.Header().Get("Strict-Transport-Security") == "" {
-			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		}
 		next.ServeHTTP(w, r)
 	})
