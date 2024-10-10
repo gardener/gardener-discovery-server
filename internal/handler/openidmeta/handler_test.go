@@ -70,7 +70,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			200,
 			[]byte("config1"),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 				"Cache-Control":             "public, max-age=3600",
 			},
@@ -82,7 +82,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			200,
 			[]byte("jwks1"),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 				"Cache-Control":             "public, max-age=3600",
 			},
@@ -94,7 +94,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			200,
 			[]byte("config2"),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 				"Cache-Control":             "public, max-age=3600",
 			},
@@ -106,7 +106,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			200,
 			[]byte("jwks2"),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 				"Cache-Control":             "public, max-age=3600",
 			},
@@ -118,7 +118,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			404,
 			[]byte(`{"code":404,"message":"not found"}`),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 			},
 		),
@@ -129,7 +129,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			404,
 			[]byte(`{"code":404,"message":"not found"}`),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 			},
 		),
@@ -140,7 +140,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			400,
 			[]byte(`{"code":400,"message":"bad request"}`),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 			},
 		),
@@ -151,7 +151,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			400,
 			[]byte(`{"code":400,"message":"bad request"}`),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 			},
 		),
@@ -172,7 +172,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			405,
 			[]byte(`{"code":405,"message":"method not allowed"}`),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 			},
 		),
@@ -183,7 +183,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			405,
 			[]byte(`{"code":405,"message":"method not allowed"}`),
 			map[string]string{
-				"Strict-Transport-Security": "max-age=31536000",
+				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
 			},
 		),

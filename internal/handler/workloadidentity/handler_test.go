@@ -68,7 +68,7 @@ var _ = Describe("#WorkloadIdentity", func() {
 		mux.Handle(pathPrefix+"/jwks", handler.HandleJWKS())
 
 		headers = map[string]string{
-			"Strict-Transport-Security": "max-age=31536000",
+			"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 			"Content-Type":              "application/json",
 			"Cache-Control":             "public, max-age=3600",
 		}

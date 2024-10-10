@@ -35,7 +35,7 @@ var _ = Describe("#Handler", func() {
 			h := handler.SetHSTS(noOpHandler)
 
 			h.ServeHTTP(resp, req)
-			Expect(resp).To(HaveHTTPHeaderWithValue("Strict-Transport-Security", "max-age=31536000"))
+			Expect(resp).To(HaveHTTPHeaderWithValue("Strict-Transport-Security", "max-age=31536000; includeSubDomains"))
 			Expect(resp.Header()).To(HaveLen(1))
 		})
 
