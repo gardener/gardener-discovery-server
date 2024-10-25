@@ -50,6 +50,7 @@ tidy:
 	@go mod tidy
 	@mkdir -p $(REPO_ROOT)/.ci/hack && cp $(GARDENER_HACK_DIR)/.ci/* $(GARDENER_HACK_DIR)/generate-controller-registration.sh $(REPO_ROOT)/.ci/hack/ && chmod +xw $(REPO_ROOT)/.ci/hack/*
 	@cp $(GARDENER_HACK_DIR)/cherry-pick-pull.sh $(HACK_DIR)/cherry-pick-pull.sh && chmod +xw $(HACK_DIR)/cherry-pick-pull.sh
+	@cp $(GARDENER_HACK_DIR)/sast.sh $(HACK_DIR)/sast.sh && chmod +xw $(HACK_DIR)/sast.sh
 
 .PHONY: clean
 clean:
@@ -78,6 +79,14 @@ generate: $(CONTROLLER_GEN) $(YQ) $(VGOPATH) $(MOCKGEN) $(HELM)
 format: $(GOIMPORTS) $(GOIMPORTSREVISER)
 	@bash $(GARDENER_HACK_DIR)/format.sh ./cmd ./internal
 
+.PHONY: sast
+sast: tidy $(GOSEC)
+	@$(HACK_DIR)/sast.sh
+
+.PHONY: sast-report
+sast-report: tidy $(GOSEC)
+	@$(HACK_DIR)/sast.sh --gosec-report true
+
 .PHONY: test
 test: $(REPORT_COLLECTOR)
 	@bash $(GARDENER_HACK_DIR)/test.sh ./cmd/... ./internal/...
@@ -91,10 +100,10 @@ test-clean:
 	@bash $(GARDENER_HACK_DIR)/test-cover-clean.sh
 
 .PHONY: verify
-verify: check format test
+verify: check format test sast
 
 .PHONY: verify-extended
-verify-extended: check-generate check format test test-cov test-clean
+verify-extended: check-generate check format test test-cov test-clean sast-report
 
 # use static label for skaffold to prevent rolling all gardener components on every `skaffold` invocation
 server-up server-down: export SKAFFOLD_LABEL = skaffold.dev/run-id=server-local
