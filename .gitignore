@@ -20,3 +20,6 @@
 .vscode
 
 testdata
+
+# gosec
+gosec-report.sarif

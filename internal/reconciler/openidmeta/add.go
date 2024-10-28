@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // ControllerName is the name of the shoot metadata controller.
@@ -34,9 +35,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&corev1.Secret{}, builder.WithPredicates(secretPredicate())). // TODO it is not yet clear what the predicate should be
 		WithOptions(controller.Options{
 			MaxConcurrentReconciles: 50,
-			RateLimiter: workqueue.NewMaxOfRateLimiter(
-				workqueue.NewItemExponentialFailureRateLimiter(5*time.Second, 2*time.Minute),
-				&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(10), 100)},
+			RateLimiter: workqueue.NewTypedMaxOfRateLimiter(
+				workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Second, 2*time.Minute),
+				&workqueue.TypedBucketRateLimiter[reconcile.Request]{Limiter: rate.NewLimiter(rate.Limit(10), 100)},
 			),
 		}).
 		Complete(r)
