@@ -8,6 +8,14 @@ set -o nounset
 set -o pipefail
 set -o errexit
 
+# If running in prow, we need to ensure that garden.local.gardener.cloud resolves to localhost
+ensure_glgc_resolves_to_localhost() {
+  if [ -n "${CI:-}" ]; then
+    printf "\n127.0.0.1 garden.local.gardener.cloud\n" >> /etc/hosts
+    printf "\n::1 garden.local.gardener.cloud\n" >> /etc/hosts
+  fi
+}
+
 clamp_mss_to_pmtu() {
   # https://github.com/kubernetes/test-infra/issues/23741
   if [[ "$OSTYPE" != "darwin"* ]]; then
@@ -17,6 +25,8 @@ clamp_mss_to_pmtu() {
 
 REPO_ROOT="$(readlink -f $(dirname ${0})/..)"
 GARDENER_VERSION=$(go list -m -f '{{.Version}}' github.com/gardener/gardener)
+
+ensure_glgc_resolves_to_localhost
 
 if [[ ! -d "$REPO_ROOT/gardener" ]]; then
   git clone --branch $GARDENER_VERSION https://github.com/gardener/gardener.git
