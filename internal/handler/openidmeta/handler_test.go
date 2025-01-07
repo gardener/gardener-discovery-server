@@ -14,12 +14,13 @@ import (
 
 	"github.com/gardener/gardener-discovery-server/internal/handler"
 	oidhandler "github.com/gardener/gardener-discovery-server/internal/handler/openidmeta"
+	"github.com/gardener/gardener-discovery-server/internal/store"
 	oidstore "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 )
 
 var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 	var (
-		store *oidstore.Store
+		s *store.Store[oidstore.Data]
 
 		projectName = "foo"
 
@@ -31,18 +32,18 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 	)
 
 	BeforeEach(func() {
-		store = oidstore.NewStore()
-		store.Write(projectName+"--"+uid1, oidstore.Data{
+		s = store.MustNewStore(oidstore.Copy)
+		s.Write(projectName+"--"+uid1, oidstore.Data{
 			Config: []byte("config1"),
 			JWKS:   []byte("jwks1"),
 		})
-		store.Write(projectName+"--"+uid2, oidstore.Data{
+		s.Write(projectName+"--"+uid2, oidstore.Data{
 			Config: []byte("config2"),
 			JWKS:   []byte("jwks2"),
 		})
 
 		log := logzap.New(logzap.WriteTo(GinkgoWriter))
-		oidHandler = oidhandler.New(store, log)
+		oidHandler = oidhandler.New(s, log)
 		mux = http.NewServeMux()
 		mux.Handle("/projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configuration", oidHandler.HandleOpenIDConfiguration())
 		mux.Handle("/projects/{projectName}/shoots/{shootUID}/issuer/jwks", oidHandler.HandleJWKS())

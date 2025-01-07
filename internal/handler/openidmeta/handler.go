@@ -11,7 +11,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/gardener/gardener-discovery-server/internal/handler"
-	store "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
+	"github.com/gardener/gardener-discovery-server/internal/store"
+	"github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 )
 
 const (
@@ -28,12 +29,12 @@ var (
 
 // Handler is capable or serving openid discovery documents.
 type Handler struct {
-	store store.Reader
+	store store.Reader[openidmeta.Data]
 	log   logr.Logger
 }
 
 // New constructs a new [Handler].
-func New(store store.Reader, log logr.Logger) *Handler {
+func New(store store.Reader[openidmeta.Data], log logr.Logger) *Handler {
 	return &Handler{
 		store: store,
 		log:   log,
@@ -46,7 +47,7 @@ func (h *Handler) HandleOpenIDConfiguration() http.Handler {
 	log := h.log.WithName("openid-configuration")
 	return handler.SetHSTS(
 		handler.AllowMethods(handleRequest(log, h.store,
-			func(data store.Data) []byte { return data.Config },
+			func(data openidmeta.Data) []byte { return data.Config },
 		),
 			log, http.MethodGet, http.MethodHead,
 		),
@@ -59,14 +60,14 @@ func (h *Handler) HandleJWKS() http.Handler {
 	log := h.log.WithName("jwks")
 	return handler.SetHSTS(
 		handler.AllowMethods(handleRequest(log, h.store,
-			func(data store.Data) []byte { return data.JWKS },
+			func(data openidmeta.Data) []byte { return data.JWKS },
 		),
 			log, http.MethodGet, http.MethodHead,
 		),
 	)
 }
 
-func handleRequest(log logr.Logger, s store.Reader, getContent func(store.Data) []byte) http.Handler {
+func handleRequest(log logr.Logger, s store.Reader[openidmeta.Data], getContent func(openidmeta.Data) []byte) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		shootUID := r.PathValue("shootUID")
 		if _, err := uuid.Parse(shootUID); err != nil {

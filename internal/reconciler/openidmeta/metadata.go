@@ -20,6 +20,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/gardener/gardener-discovery-server/internal/store"
 	"github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 	"github.com/gardener/gardener-discovery-server/internal/utils"
 )
@@ -29,7 +30,7 @@ import (
 type Reconciler struct {
 	Client       client.Client
 	ResyncPeriod time.Duration
-	Store        openidmeta.Writer
+	Store        store.Writer[openidmeta.Data]
 }
 
 // Reconcile retrieves the public OIDC metadata info from a secret and stores into cache.
