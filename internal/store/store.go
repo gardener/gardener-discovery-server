@@ -9,6 +9,7 @@ import (
 	"sync"
 )
 
+// ErrNoCopyFunc is an error indicating that a copyFunc was not passed to [Store].
 var ErrNoCopyFunc = errors.New("store: copyFunc must not be nil")
 
 // Reader lets the consumer read entries from [Store].
