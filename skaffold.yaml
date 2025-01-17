@@ -18,6 +18,7 @@ build:
             - internal/handler/workloadidentity
             - internal/metrics
             - internal/reconciler/openidmeta
+            - internal/store
             - internal/store/openidmeta
             - internal/utils
             - VERSION

@@ -40,7 +40,8 @@ import (
 	"github.com/gardener/gardener-discovery-server/internal/handler/workloadidentity"
 	"github.com/gardener/gardener-discovery-server/internal/metrics"
 	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
-	store "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
+	"github.com/gardener/gardener-discovery-server/internal/store"
+	"github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 )
 
 // AppName is the name of the application.
@@ -126,15 +127,15 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 		return err
 	}
 
-	store := store.NewStore()
+	s := store.MustNewStore(openidmeta.Copy)
 	if err := (&oidreconciler.Reconciler{
 		ResyncPeriod: conf.Resync.Duration,
-		Store:        store,
+		Store:        s,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller: %w", err)
 	}
 
-	h := oidhandler.New(store, log.WithName("oid-meta-handler"))
+	h := oidhandler.New(s, log.WithName("oid-meta-handler"))
 
 	mux := http.NewServeMux()
 	const (

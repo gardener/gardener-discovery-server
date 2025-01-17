@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
+	"github.com/gardener/gardener-discovery-server/internal/store"
 	oidstore "github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 	"github.com/gardener/gardener-discovery-server/internal/utils"
 )
@@ -39,8 +40,8 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 	var (
 		reconciler *oidreconciler.Reconciler
 
-		c     client.Client
-		store *oidstore.Store
+		c client.Client
+		s *store.Store[oidstore.Data]
 
 		shoot                *gardencorev1beta1.Shoot
 		project              *gardencorev1beta1.Project
@@ -53,7 +54,7 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 		shootUID       = types.UID("7a25a9b8-f7fc-4e1e-a421-31b4deaa3086")
 		resyncPeriod   = time.Second
 
-		expectStoreEntry = func(store *oidstore.Store, key string, want oidstore.Data) {
+		expectStoreEntry = func(store *store.Store[oidstore.Data], key string, want oidstore.Data) {
 			got, ok := store.Read(key)
 			Expect(ok).To(BeTrue())
 			Expect(got).To(Equal(want))
@@ -128,10 +129,10 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 				"jwks":          jwksBytes,
 			},
 		}
-		store = oidstore.NewStore()
+		s = store.MustNewStore(oidstore.Copy)
 		reconciler = &oidreconciler.Reconciler{
 			Client:       c,
-			Store:        store,
+			Store:        s,
 			ResyncPeriod: resyncPeriod,
 		}
 		secretNamespacedName = client.ObjectKeyFromObject(secret)
@@ -146,8 +147,8 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(res).To(Equal(ctrl.Result{RequeueAfter: resyncPeriod}))
 
-		Expect(store.Len()).To(Equal(1))
-		expectStoreEntry(store, secret.Name, oidstore.Data{
+		Expect(s.Len()).To(Equal(1))
+		expectStoreEntry(s, secret.Name, oidstore.Data{
 			Config: []byte(`{"issuer":"https://foo","jwks_uri":"https://foo/jwks"}`),
 			JWKS:   expectedJWKSBytes,
 		})
@@ -164,8 +165,8 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res).To(Equal(ctrl.Result{RequeueAfter: resyncPeriod}))
 
-			Expect(store.Len()).To(Equal(1))
-			expectStoreEntry(store, secret.Name, oidstore.Data{
+			Expect(s.Len()).To(Equal(1))
+			expectStoreEntry(s, secret.Name, oidstore.Data{
 				Config: []byte(`{"issuer":"https://foo","jwks_uri":"https://foo/jwks"}`),
 				JWKS:   expectedJWKSBytes,
 			})
@@ -176,7 +177,7 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res).To(Equal(ctrl.Result{}))
 
-			Expect(store.Len()).To(Equal(0))
+			Expect(s.Len()).To(Equal(0))
 		},
 		Entry("secret is missing", func() {
 			Expect(c.Delete(ctx, secret)).To(Succeed())
