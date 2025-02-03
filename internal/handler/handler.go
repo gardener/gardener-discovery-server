@@ -8,12 +8,21 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/gardener/gardener-discovery-server/internal/store"
 	"github.com/go-logr/logr"
+	"github.com/google/uuid"
 )
 
 const (
+	headerCacheControl = "Cache-Control"
+	pubCacheControl    = "public, max-age=3600"
+
 	headerContentType = "Content-Type"
 	mimeAppJSON       = "application/json"
+)
+
+var (
+	responseBadRequest = []byte(`{"code":400,"message":"bad request"}`)
 )
 
 // SetHSTS is middleware handler setting Strict-Transport-Security header.
@@ -58,6 +67,39 @@ func NotFound(log logr.Logger) http.Handler {
 		w.WriteHeader(http.StatusNotFound)
 		if _, err := w.Write(responseNotFound); err != nil {
 			log.Error(err, "Failed writing not found response")
+			return
+		}
+	})
+}
+
+// StoreRequest handles requests that read data from [Store].
+// It requires "projectName" and "shootUID" as path parameters.
+// The data is read from the store and the content is extracted using the getContent function.
+// The returned result from getContent should be in JSON format.
+func StoreRequest[T any](log logr.Logger, s store.Reader[T], getContent func(T) []byte) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		shootUID := r.PathValue("shootUID")
+		if _, err := uuid.Parse(shootUID); err != nil {
+			w.Header().Set(headerContentType, mimeAppJSON)
+			w.WriteHeader(http.StatusBadRequest)
+			if _, err := w.Write(responseBadRequest); err != nil {
+				log.Error(err, "Failed writing bad request response")
+				return
+			}
+			return
+		}
+
+		projectName := r.PathValue("projectName")
+		data, ok := s.Read(projectName + "--" + shootUID)
+		if !ok {
+			NotFound(log).ServeHTTP(w, r)
+			return
+		}
+
+		w.Header().Set(headerCacheControl, pubCacheControl)
+		w.Header().Set(headerContentType, mimeAppJSON)
+		if _, err := w.Write(getContent(data)); err != nil {
+			log.Error(err, "Failed writing response")
 			return
 		}
 	})
