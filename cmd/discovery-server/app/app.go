@@ -135,7 +135,7 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 		ResyncPeriod: conf.Resync.Duration,
 		Store:        oidStore,
 	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create controller: %w", err)
+		return fmt.Errorf("unable to create oid controller: %w", err)
 	}
 
 	oidHandler := oidhandler.New(oidStore, log.WithName("oid-meta-handler"))
@@ -145,7 +145,7 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 		ResyncPeriod: conf.Resync.Duration,
 		Store:        certStore,
 	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create controller: %w", err)
+		return fmt.Errorf("unable to create cert controller: %w", err)
 	}
 
 	certhandlerHandler := certhandler.New(certStore, log.WithName("cluster-ca-handler"))

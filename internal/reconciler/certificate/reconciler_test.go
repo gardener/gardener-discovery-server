@@ -29,6 +29,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	certreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/certificate"
@@ -37,6 +39,13 @@ import (
 )
 
 var _ = Describe("#ReconcileCertificate", func() {
+	const (
+		projectName    = "abc"
+		shootName      = "my-shoot"
+		shootNamespace = "garden-" + projectName
+		resyncPeriod   = time.Second
+	)
+
 	var (
 		reconciler *certreconciler.Reconciler
 
@@ -46,16 +55,11 @@ var _ = Describe("#ReconcileCertificate", func() {
 		namespace               *corev1.Namespace
 		shoot                   *gardencorev1beta1.Shoot
 		project                 *gardencorev1beta1.Project
-		projectName             = "abc"
 		configmap               *corev1.ConfigMap
 		configmapNamespacedName types.NamespacedName
 
-		ctx            = context.TODO()
-		shootName      = "my-shoot"
-		shootNamespace = "garden-abc"
-		shootUID       = types.UID("7a25a9b8-f7fc-4e1e-a421-31b4deaa3086")
-		resyncPeriod   = time.Second
-
+		ctx      = logf.IntoContext(context.Background(), logzap.New(logzap.WriteTo(GinkgoWriter)))
+		shootUID = types.UID("7a25a9b8-f7fc-4e1e-a421-31b4deaa3086")
 		storeKey = projectName + "--" + string(shootUID)
 
 		expectedBundleBytes []byte
