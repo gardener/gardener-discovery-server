@@ -12,7 +12,7 @@ The Gardener Discovery Server currently handles the following operations:
 GET /garden/workload-identity/issuer/.well-known/openid-configuration
 ```
 
-#### Sample Response
+#### Response
 
 ```json
 {
@@ -38,7 +38,7 @@ GET /garden/workload-identity/issuer/.well-known/openid-configuration
 GET /garden/workload-identity/issuer/jwks
 ```
 
-#### Sample Response
+#### Response
 
 ```json
 {
@@ -65,7 +65,7 @@ GET /garden/workload-identity/issuer/jwks
 GET /projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configuration
 ```
 
-#### Sample Response
+#### Response
 
 ```json
 {
@@ -91,7 +91,7 @@ GET /projects/{projectName}/shoots/{shootUID}/issuer/.well-known/openid-configur
 GET /projects/{projectName}/shoots/{shootUID}/issuer/jwks
 ```
 
-####  Sample Response
+#### Response
 
 ```json
 {
@@ -116,7 +116,7 @@ GET /projects/{projectName}/shoots/{shootUID}/issuer/jwks
 GET /projects/{projectName}/shoots/{shootUID}/cluster-ca
 ```
 
-####  Sample Response
+#### Response
 
 ```json
 {
