@@ -139,7 +139,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			http.MethodGet,
 			"https://abc.def/projects/not-existent/shoots/not-a-uuid/issuer/.well-known/openid-configuration",
 			400,
-			[]byte(`{"code":400,"message":"bad request"}`),
+			[]byte(`{"code":400,"message":"invalid UID"}`),
 			map[string]string{
 				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
@@ -150,7 +150,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			http.MethodGet,
 			"https://abc.def/projects/not-existent/shoots/not-a-uuid/issuer/jwks",
 			400,
-			[]byte(`{"code":400,"message":"bad request"}`),
+			[]byte(`{"code":400,"message":"invalid UID"}`),
 			map[string]string{
 				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",

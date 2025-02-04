@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	responseBadRequest = []byte(`{"code":400,"message":"bad request"}`)
+	responseInvalidUID = []byte(`{"code":400,"message":"invalid UID"}`)
 )
 
 // SetHSTS is middleware handler setting Strict-Transport-Security header.
@@ -83,7 +83,7 @@ func StoreRequest[T any](log logr.Logger, s store.Reader[T], getContent func(T) 
 		if _, err := uuid.Parse(shootUID); err != nil {
 			w.Header().Set(headerContentType, mimeAppJSON)
 			w.WriteHeader(http.StatusBadRequest)
-			if _, err := w.Write(responseBadRequest); err != nil {
+			if _, err := w.Write(responseInvalidUID); err != nil {
 				log.Error(err, "Failed writing bad request response")
 				return
 			}
