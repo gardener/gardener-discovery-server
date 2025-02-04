@@ -160,7 +160,7 @@ var _ = Describe("#Handler", func() {
 
 			Expect(resp).To(HaveHTTPStatus(http.StatusBadRequest))
 			Expect(resp).To(HaveHTTPHeaderWithValue("Content-Type", "application/json"))
-			Expect(resp).To(HaveHTTPBody(`{"code":400,"message":"bad request"}`))
+			Expect(resp).To(HaveHTTPBody(`{"code":400,"message":"invalid UID"}`))
 		})
 	})
 })

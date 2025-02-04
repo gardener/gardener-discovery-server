@@ -101,7 +101,7 @@ var _ = Describe("#HttpHandlerCertificate", func() {
 			http.MethodGet,
 			"https://abc.def/projects/not-existent/shoots/not-a-uuid/cluster-ca",
 			400,
-			[]byte(`{"code":400,"message":"bad request"}`),
+			[]byte(`{"code":400,"message":"invalid UID"}`),
 			map[string]string{
 				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
