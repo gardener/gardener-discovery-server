@@ -26,9 +26,9 @@ import (
 
 var _ = Describe("Managed Issuer Tests", Label("ManagedIssuer"), func() {
 	f := defaultShootCreationFramework()
-	f.Shoot = defaultShoot("e2e-default")
+	f.Shoot = defaultShoot("e2e-def-")
 
-	It("Create Shoot, Enable Managed Issuer, Delete Shoot", Label("good-case"), func() {
+	It("Create Shoot, Enable Managed Issuer, Check Shoot CA, Delete Shoot", Label("good-case"), func() {
 		By("Create Shoot")
 		ctx, cancel := context.WithTimeout(parentCtx, 15*time.Minute)
 		defer cancel()
@@ -100,6 +100,26 @@ var _ = Describe("Managed Issuer Tests", Label("ManagedIssuer"), func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(rsaKey.PublicKey.Equal(pubKey)).To(BeTrue())
 
+		By("Check that the Discovery Server is able to serve the shoot's CA bundle")
+		resp, err = getCABundleForShoot(parentCtx, f.Shoot.ObjectMeta.UID)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		caBundleBytes, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		Expect(err).ToNot(HaveOccurred())
+		var clusterCA map[string]any
+		Expect(json.Unmarshal(caBundleBytes, &clusterCA)).To(Succeed())
+		certs, ok := clusterCA["certs"].(string)
+		Expect(ok).To(BeTrue())
+
+		By("Check that the received CA bundle is indeed the same as the one that resides in the seed")
+		secretList = &corev1.SecretList{}
+		Expect(seedClient.Client().List(ctx, secretList, client.InNamespace(shootSeedNamespace), client.MatchingLabels{"bundle-for": "ca"})).To(Succeed())
+		Expect(secretList.Items).To(HaveLen(1))
+
+		caBundle := secretList.Items[0].Data["bundle.crt"]
+		Expect(string(caBundle)).To(Equal(certs))
+
 		By("Delete Shoot")
 		ctx, cancel = context.WithTimeout(parentCtx, 15*time.Minute)
 		defer cancel()
@@ -114,5 +134,13 @@ var _ = Describe("Managed Issuer Tests", Label("ManagedIssuer"), func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 		resp.Body.Close()
+
+		Eventually(func() bool {
+			resp, err := getCABundleForShoot(parentCtx, f.Shoot.ObjectMeta.UID)
+			Expect(err).ToNot(HaveOccurred())
+			defer resp.Body.Close()
+			Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			return err == nil && resp.StatusCode == http.StatusNotFound
+		}).WithTimeout(time.Minute).Should(BeTrue())
 	})
 })
