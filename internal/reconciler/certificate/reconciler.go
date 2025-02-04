@@ -153,7 +153,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}}
 	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(shoot), shoot); err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Info("Removing certificates from store - shoot not found", "shoot", client.ObjectKeyFromObject(shoot))
+			log.Info("Removing certificates from store - shoot not found", "shoot", shoot)
 			r.deleteMapping(mappingKey)
 
 			return reconcile.Result{}, nil
@@ -162,7 +162,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	if shootUID != string(shoot.UID) {
-		log.Info("Removing certificates from store - shoot UID is different in spec and configmap label", "shoot", client.ObjectKeyFromObject(shoot))
+		log.Info("Removing certificates from store - shoot UID is different in spec and configmap label", "shoot", shoot)
 		r.deleteMapping(mappingKey)
 		return reconcile.Result{}, nil
 	}
@@ -206,9 +206,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// Finally write the certificates to store
-	log.Info("Adding certificates to store")
+	log.Info("Adding certificates to store", "shoot", shoot)
 	bundle := struct {
-		Certs string "json:\"certs\""
+		Certs string `json:"certs"`
 	}{Certs: data}
 
 	payload, err := json.Marshal(bundle)
