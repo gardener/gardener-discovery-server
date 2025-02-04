@@ -8,9 +8,10 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/gardener/gardener-discovery-server/internal/store"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
+
+	"github.com/gardener/gardener-discovery-server/internal/store"
 )
 
 const (
