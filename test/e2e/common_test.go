@@ -36,7 +36,7 @@ func defaultShootCreationFramework() *framework.ShootCreationFramework {
 func defaultShoot(generateName string) *gardencorev1beta1.Shoot {
 	return &gardencorev1beta1.Shoot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: generateName,
+			GenerateName: generateName,
 			Annotations: map[string]string{
 				v1beta1constants.AnnotationShootCloudConfigExecutionMaxDelaySeconds: "0",
 			},
@@ -92,6 +92,18 @@ func getJWKSForShoot(ctx context.Context, shootUID types.UID) (*http.Response, e
 
 func getWellKnownForShoot(ctx context.Context, shootUID types.UID) (*http.Response, error) {
 	uri := discoveryServerBaseURI + "/projects/local/shoots/" + string(shootUID) + "/issuer/.well-known/openid-configuration"
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return discoveryClient.Do(req)
+}
+
+func getCABundleForShoot(ctx context.Context, shootUID types.UID) (*http.Response, error) {
+	uri := discoveryServerBaseURI + "/projects/local/shoots/" + string(shootUID) + "/cluster-ca"
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
