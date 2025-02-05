@@ -28,6 +28,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
@@ -37,6 +39,12 @@ import (
 )
 
 var _ = Describe("#ReconcileOpenIDMeta", func() {
+	const (
+		shootName      = "my-shoot"
+		shootNamespace = "garden-abc"
+		resyncPeriod   = time.Second
+	)
+
 	var (
 		reconciler *oidreconciler.Reconciler
 
@@ -48,11 +56,8 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 		secret               *corev1.Secret
 		secretNamespacedName types.NamespacedName
 
-		ctx            = context.TODO()
-		shootName      = "my-shoot"
-		shootNamespace = "garden-abc"
-		shootUID       = types.UID("7a25a9b8-f7fc-4e1e-a421-31b4deaa3086")
-		resyncPeriod   = time.Second
+		ctx      = logf.IntoContext(context.Background(), logzap.New(logzap.WriteTo(GinkgoWriter)))
+		shootUID = types.UID("7a25a9b8-f7fc-4e1e-a421-31b4deaa3086")
 
 		expectStoreEntry = func(store *store.Store[oidstore.Data], key string, want oidstore.Data) {
 			got, ok := store.Read(key)

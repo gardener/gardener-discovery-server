@@ -24,12 +24,17 @@ clamp_mss_to_pmtu() {
 }
 
 REPO_ROOT="$(readlink -f $(dirname ${0})/..)"
-GARDENER_VERSION=$(go list -m -f '{{.Version}}' github.com/gardener/gardener)
+# TODO: revert this once g/g releases 1.112.0
+# GARDENER_VERSION=$(go list -m -f '{{.Version}}' github.com/gardener/gardener)
+GARDENER_VERSION="44bea26b58a5ca7afd7241e539b5032d3e264716"
+
 
 ensure_glgc_resolves_to_localhost
 
 if [[ ! -d "$REPO_ROOT/gardener" ]]; then
-  git clone --branch $GARDENER_VERSION https://github.com/gardener/gardener.git
+  # TODO: revert this once g/g releases 1.112.0
+  # git clone --branch $GARDENER_VERSION https://github.com/gardener/gardener.git
+  git clone https://github.com/gardener/gardener.git && cd "$REPO_ROOT/gardener" &&  git checkout $GARDENER_VERSION && cd "$REPO_ROOT"
 else
   (cd "$REPO_ROOT/gardener" && git checkout $GARDENER_VERSION)
 fi

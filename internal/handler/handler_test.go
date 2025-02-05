@@ -9,11 +9,13 @@ import (
 	"net/http/httptest"
 
 	"github.com/go-logr/logr"
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/gardener/gardener-discovery-server/internal/handler"
+	"github.com/gardener/gardener-discovery-server/internal/store"
 )
 
 var _ = Describe("#Handler", func() {
@@ -93,6 +95,72 @@ var _ = Describe("#Handler", func() {
 			Expect(resp).To(HaveHTTPStatus(http.StatusNotFound))
 			Expect(resp).To(HaveHTTPHeaderWithValue("Content-Type", "application/json"))
 			Expect(resp).To(HaveHTTPBody(`{"code":404,"message":"not found"}`))
+		})
+	})
+
+	Describe("#StoreRequest", func() {
+		var s *store.Store[string]
+
+		BeforeEach(func() {
+			var err error
+			s, err = store.NewStore(func(s string) string {
+				return s
+			})
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("should return the data written to store", func() {
+			id := uuid.NewString()
+			s.Write("test--"+id, "entry")
+
+			req := httptest.NewRequest(http.MethodGet, "/projects/test/shoots/"+id+"/test", nil)
+			req.Pattern = "/projects/{projectName}/shoots/{shootUID}/test"
+			req.SetPathValue("projectName", "test")
+			req.SetPathValue("shootUID", id)
+
+			resp := httptest.NewRecorder()
+
+			h := handler.StoreRequest(log, s, func(data string) []byte { return []byte(`{"data":"` + data + `"}`) })
+			h.ServeHTTP(resp, req)
+
+			Expect(resp).To(HaveHTTPStatus(http.StatusOK))
+			Expect(resp).To(HaveHTTPHeaderWithValue("Content-Type", "application/json"))
+			Expect(resp).To(HaveHTTPHeaderWithValue("Cache-Control", "public, max-age=3600"))
+			Expect(resp).To(HaveHTTPBody(`{"data":"entry"}`))
+		})
+
+		It("should return not found if data is not in store", func() {
+			id := uuid.NewString()
+			req := httptest.NewRequest(http.MethodGet, "/projects/test/shoots/"+id+"/test", nil)
+			req.Pattern = "/projects/{projectName}/shoots/{shootUID}/test"
+			req.SetPathValue("projectName", "test")
+			req.SetPathValue("shootUID", id)
+
+			resp := httptest.NewRecorder()
+
+			h := handler.StoreRequest(log, s, func(data string) []byte { return []byte(`{"data":"` + data + `"}`) })
+			h.ServeHTTP(resp, req)
+
+			Expect(resp).To(HaveHTTPStatus(http.StatusNotFound))
+			Expect(resp).To(HaveHTTPHeaderWithValue("Content-Type", "application/json"))
+			Expect(resp).To(HaveHTTPBody(`{"code":404,"message":"not found"}`))
+		})
+
+		It("should return bad request if path value shootUID is invalid", func() {
+			id := uuid.NewString()
+			req := httptest.NewRequest(http.MethodGet, "/projects/test/shoots/"+id+"/test", nil)
+			req.Pattern = "/projects/{projectName}/shoots/{shootUID}/test"
+			req.SetPathValue("projectName", "test")
+			req.SetPathValue("shootUID", "invalid")
+
+			resp := httptest.NewRecorder()
+
+			h := handler.StoreRequest(log, s, func(data string) []byte { return []byte(`{"data":"` + data + `"}`) })
+			h.ServeHTTP(resp, req)
+
+			Expect(resp).To(HaveHTTPStatus(http.StatusBadRequest))
+			Expect(resp).To(HaveHTTPHeaderWithValue("Content-Type", "application/json"))
+			Expect(resp).To(HaveHTTPBody(`{"code":400,"message":"invalid UID"}`))
 		})
 	})
 })

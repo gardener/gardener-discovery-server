@@ -36,11 +36,14 @@ import (
 	"github.com/gardener/gardener-discovery-server/cmd/discovery-server/app/options"
 	"github.com/gardener/gardener-discovery-server/internal/dynamiccert"
 	"github.com/gardener/gardener-discovery-server/internal/handler"
+	certhandler "github.com/gardener/gardener-discovery-server/internal/handler/certificate"
 	oidhandler "github.com/gardener/gardener-discovery-server/internal/handler/openidmeta"
 	"github.com/gardener/gardener-discovery-server/internal/handler/workloadidentity"
 	"github.com/gardener/gardener-discovery-server/internal/metrics"
+	certificatereconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/certificate"
 	oidreconciler "github.com/gardener/gardener-discovery-server/internal/reconciler/openidmeta"
 	"github.com/gardener/gardener-discovery-server/internal/store"
+	"github.com/gardener/gardener-discovery-server/internal/store/certificate"
 	"github.com/gardener/gardener-discovery-server/internal/store/openidmeta"
 )
 
@@ -127,15 +130,25 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 		return err
 	}
 
-	s := store.MustNewStore(openidmeta.Copy)
+	oidStore := store.MustNewStore(openidmeta.Copy)
 	if err := (&oidreconciler.Reconciler{
 		ResyncPeriod: conf.Resync.Duration,
-		Store:        s,
+		Store:        oidStore,
 	}).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to create controller: %w", err)
+		return fmt.Errorf("unable to create oid controller: %w", err)
 	}
 
-	h := oidhandler.New(s, log.WithName("oid-meta-handler"))
+	oidHandler := oidhandler.New(oidStore, log.WithName("oid-meta-handler"))
+
+	certStore := store.MustNewStore(certificate.Copy)
+	if err := (&certificatereconciler.Reconciler{
+		ResyncPeriod: conf.Resync.Duration,
+		Store:        certStore,
+	}).SetupWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to create cert controller: %w", err)
+	}
+
+	certhandlerHandler := certhandler.New(certStore, log.WithName("cluster-ca-handler"))
 
 	mux := http.NewServeMux()
 	const (
@@ -144,11 +157,19 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 	)
 	mux.Handle(
 		oidConfigPath,
-		metrics.InstrumentHandler(oidConfigPath, h.HandleOpenIDConfiguration()),
+		metrics.InstrumentHandler(oidConfigPath, oidHandler.HandleOpenIDConfiguration()),
 	)
 	mux.Handle(
 		jwksPath,
-		metrics.InstrumentHandler(jwksPath, h.HandleJWKS()),
+		metrics.InstrumentHandler(jwksPath, oidHandler.HandleJWKS()),
+	)
+
+	const (
+		caPath = "/projects/{projectName}/shoots/{shootUID}/cluster-ca"
+	)
+	mux.Handle(
+		caPath,
+		metrics.InstrumentHandler(caPath, certhandlerHandler.HandleCABundle()),
 	)
 
 	if conf.WorkloadIdentity.Enabled {
