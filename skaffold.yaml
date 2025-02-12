@@ -14,11 +14,14 @@ build:
             - cmd/discovery-server/app/options
             - internal/dynamiccert
             - internal/handler
+            - internal/handler/certificate
             - internal/handler/openidmeta
             - internal/handler/workloadidentity
             - internal/metrics
+            - internal/reconciler/certificate
             - internal/reconciler/openidmeta
             - internal/store
+            - internal/store/certificate
             - internal/store/openidmeta
             - internal/utils
             - VERSION
@@ -39,8 +42,8 @@ deploy:
           - example/local/values.yaml
         namespace: garden
         setValueTemplates:
-          image.repository: '{{.IMAGE_REPO_local_skaffold_discovery_server}}'
-          image.tag: '{{.IMAGE_TAG_local_skaffold_discovery_server}}@{{.IMAGE_DIGEST_local_skaffold_discovery_server}}'
+          runtime.image.repository: '{{.IMAGE_REPO_local_skaffold_discovery_server}}'
+          runtime.image.tag: '{{.IMAGE_TAG_local_skaffold_discovery_server}}@{{.IMAGE_DIGEST_local_skaffold_discovery_server}}'
         createNamespace: true
         wait: false
 profiles: []
