@@ -68,7 +68,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return reconcile.Result{}, nil
 	}
 
-	if v, ok := configmap.Data[secretsutils.DataKeyCertificateCA]; !ok || len(v) == 0 {
+	var (
+		data string
+		ok   bool
+	)
+
+	if data, ok = configmap.Data[secretsutils.DataKeyCertificateCA]; !ok || len(data) == 0 {
 		log.Info("Removing certificates from store - configmap is missing data key", "key", secretsutils.DataKeyCertificateCA)
 		r.deleteMapping(mappingKey)
 
@@ -98,7 +103,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		shootName   string
 		shootUID    string
 		projectName string
-		ok          bool
 	)
 
 	projectName, ok = namespace.Labels[v1beta1constants.ProjectName]
@@ -140,9 +144,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return reconcile.Result{}, nil
 	}
 
-	shootUID, ok = configmap.Labels["shoot.gardener.cloud/uid"]
+	shootUID, ok = configmap.Labels[v1beta1constants.ShootUID]
 	if !ok {
-		log.Info("Removing certificates from store - configmap does not have expected label", "label", "shoot.gardener.cloud/uid")
+		log.Info("Removing certificates from store - configmap does not have expected label", "label", v1beta1constants.ShootUID)
 		r.deleteMapping(mappingKey)
 		return reconcile.Result{}, nil
 	}
@@ -167,8 +171,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return reconcile.Result{}, nil
 	}
 
-	data := configmap.Data[secretsutils.DataKeyCertificateCA]
-
 	certs := []byte(data)
 	for {
 		block, rest := pem.Decode(certs)
@@ -190,7 +192,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 		cert, err := x509.ParseCertificate(block.Bytes)
 		if err != nil {
-			// we cannot do anything until this is fixed
 			log.Error(err, "Removing certificates from store - failed to parse certificate")
 			r.deleteMapping(mappingKey)
 			return reconcile.Result{}, nil
@@ -213,6 +214,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	payload, err := json.Marshal(bundle)
 	if err != nil {
+		r.deleteMapping(mappingKey)
 		return ctrl.Result{}, err
 	}
 

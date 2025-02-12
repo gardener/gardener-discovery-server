@@ -11,7 +11,7 @@ var (
 	_ store.Writer[Data] = (*store.Store[Data])(nil)
 )
 
-// Data holds public cerfiticates.
+// Data holds public certificates.
 type Data struct {
 	CABundle []byte
 }

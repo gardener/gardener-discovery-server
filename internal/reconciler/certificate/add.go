@@ -58,6 +58,7 @@ func isRelevantConfigMap(obj client.Object) bool {
 	}
 	// we only allow update-restricted resources
 	// it is not safe to read data from resources that might be modified by users
+	// TODO: Use v1beta1constants.(LabelDiscoveryPublic|LabelUpdateRestriction) for label keys when gardener is updated to >= v1.112.0
 	return configmap.Labels != nil &&
 		configmap.Labels["discovery.gardener.cloud/public"] == "shoot-ca" &&
 		configmap.Labels["gardener.cloud/update-restriction"] == "true"
