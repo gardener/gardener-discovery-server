@@ -32,6 +32,7 @@ import (
 type Reconciler struct {
 	once         sync.Once
 	storeMapping map[string]string
+	mutex        sync.Mutex
 
 	Client       client.Client
 	ResyncPeriod time.Duration
@@ -230,6 +231,9 @@ func (r *Reconciler) init() {
 }
 
 func (r *Reconciler) createMapping(mapKey, dataKey string, data []byte) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	r.storeMapping[mapKey] = dataKey
 	r.Store.Write(dataKey, certificate.Data{
 		CABundle: data,
@@ -237,6 +241,9 @@ func (r *Reconciler) createMapping(mapKey, dataKey string, data []byte) {
 }
 
 func (r *Reconciler) deleteMapping(key string) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
 	r.Store.Delete(r.storeMapping[key])
 	delete(r.storeMapping, key)
 }
