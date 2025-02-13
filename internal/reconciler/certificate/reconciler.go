@@ -32,7 +32,7 @@ import (
 type Reconciler struct {
 	once         sync.Once
 	storeMapping map[string]string
-	mutex        sync.RWMutex
+	mutex        sync.Mutex
 
 	Client       client.Client
 	ResyncPeriod time.Duration
