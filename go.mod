@@ -6,7 +6,7 @@ toolchain go1.23.1
 
 require (
 	github.com/gardener/gardener v1.111.1
-	github.com/go-jose/go-jose/v4 v4.0.4
+	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
 	github.com/onsi/ginkgo/v2 v2.22.1
