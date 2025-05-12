@@ -43,7 +43,7 @@ type Reconciler struct {
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var (
 		log        = logf.FromContext(ctx)
-		mappingKey = req.NamespacedName.String()
+		mappingKey = req.String()
 	)
 
 	r.init()
