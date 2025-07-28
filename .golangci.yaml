@@ -17,6 +17,8 @@ linters:
         text: indent-error-flow
       - path: (.+)\.go$
         text: package-comments
+      - path: (.+)\.go$
+        text: 'avoid meaningless package names'
     paths:
       - third_party$
       - builtin$
