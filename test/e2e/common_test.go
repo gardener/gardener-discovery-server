@@ -46,7 +46,7 @@ func defaultShoot(generateName string) *gardencorev1beta1.Shoot {
 			SecretBindingName: ptr.To("local"),
 			CloudProfile:      &gardencorev1beta1.CloudProfileReference{Name: "local"},
 			Kubernetes: gardencorev1beta1.Kubernetes{
-				Version:       "1.28.2",
+				Version:       "1.33.0",
 				KubeAPIServer: &gardencorev1beta1.KubeAPIServerConfig{},
 			},
 			Networking: &gardencorev1beta1.Networking{
