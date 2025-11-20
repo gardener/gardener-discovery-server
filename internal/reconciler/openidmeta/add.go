@@ -8,6 +8,7 @@ import (
 	"time"
 
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	"github.com/gardener/gardener/pkg/controllerutils"
 	"golang.org/x/time/rate"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/util/workqueue"
@@ -39,6 +40,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 				workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Second, 2*time.Minute),
 				&workqueue.TypedBucketRateLimiter[reconcile.Request]{Limiter: rate.NewLimiter(rate.Limit(10), 100)},
 			),
+			ReconciliationTimeout: controllerutils.DefaultReconciliationTimeout,
 		}).
 		Complete(r)
 }

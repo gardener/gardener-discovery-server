@@ -14,7 +14,6 @@ import (
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
-	"github.com/gardener/gardener/pkg/controllerutils"
 	secretsutils "github.com/gardener/gardener/pkg/utils/secrets"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -47,9 +46,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	)
 
 	r.init()
-
-	ctx, cancel := controllerutils.GetMainReconciliationContext(ctx, r.ResyncPeriod)
-	defer cancel()
 
 	configmap := &corev1.ConfigMap{}
 	if err := r.Client.Get(ctx, req.NamespacedName, configmap); err != nil {
