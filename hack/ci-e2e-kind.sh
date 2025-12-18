@@ -8,11 +8,11 @@ set -o nounset
 set -o pipefail
 set -o errexit
 
-# If running in prow, we need to ensure that garden.local.gardener.cloud resolves to localhost
-ensure_glgc_resolves_to_localhost() {
+# If running in prow, we need to ensure that registry.local.gardener.cloud resolves to localhost
+ensure_local_gardener_cloud_hosts() {
   if [ -n "${CI:-}" ]; then
-    printf "\n127.0.0.1 garden.local.gardener.cloud\n" >> /etc/hosts
-    printf "\n::1 garden.local.gardener.cloud\n" >> /etc/hosts
+    printf "\n127.0.0.1 registry.local.gardener.cloud\n" >> /etc/hosts
+    printf "\n::1 registry.local.gardener.cloud\n" >> /etc/hosts
   fi
 }
 
@@ -26,7 +26,7 @@ clamp_mss_to_pmtu() {
 REPO_ROOT="$(readlink -f $(dirname ${0})/..)"
 GARDENER_VERSION=$(go list -m -f '{{.Version}}' github.com/gardener/gardener)
 
-ensure_glgc_resolves_to_localhost
+ensure_local_gardener_cloud_hosts
 
 if [[ ! -d "$REPO_ROOT/gardener" ]]; then
   git clone --branch $GARDENER_VERSION https://github.com/gardener/gardener.git
