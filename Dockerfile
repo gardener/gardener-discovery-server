@@ -19,7 +19,7 @@ ARG EFFECTIVE_VERSION
 RUN make install EFFECTIVE_VERSION=$EFFECTIVE_VERSION
 
 ############# gardener-discovery-server
-FROM gcr.io/distroless/static-debian12:nonroot AS gardener-discovery-server
+FROM gcr.io/distroless/static-debian13:nonroot AS gardener-discovery-server
 WORKDIR /
 
 COPY --from=builder /go/bin/discovery-server /gardener-discovery-server
