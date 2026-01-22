@@ -9,8 +9,12 @@ updates:
   allow:
   - dependency-name: "github.com/gardener/gardener"
   - dependency-name: "github.com/go-jose/go-jose/v4"
+  labels:
+  - kind/enhancement
 # Create PRs for golang version updates
 - package-ecosystem: docker
   directory: /
   schedule:
     interval: daily
+  labels:
+  - kind/enhancement
