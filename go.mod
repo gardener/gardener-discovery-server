@@ -3,7 +3,7 @@ module github.com/gardener/gardener-discovery-server
 go 1.24.5
 
 require (
-	github.com/gardener/gardener v1.134.0
+	github.com/gardener/gardener v1.134.3
 	github.com/go-jose/go-jose/v4 v4.1.3
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
