@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -211,7 +212,8 @@ func run(ctx context.Context, log logr.Logger, conf *options.Config) error {
 			GetCertificate: cert.GetCertificate,
 			// TODO: remove in the future
 			// gosec complains although 1.2 is the current default
-			MinVersion: tls.VersionTLS12,
+			MinVersion:   tls.VersionTLS12,
+			CipherSuites: getCipherSuiteIDs(),
 		},
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -269,4 +271,21 @@ func runServer(ctx context.Context, log logr.Logger, srv *http.Server) error {
 		log.Info("Shutdown successful")
 		return nil
 	}
+}
+
+// getCipherSuiteIDs returns the default cipher suite IDs excluding:
+// - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+// - TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+func getCipherSuiteIDs() []uint16 {
+	cipherSuites := slices.DeleteFunc(tls.CipherSuites(), func(cs *tls.CipherSuite) bool {
+		return cs.ID == tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA ||
+			cs.ID == tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+	})
+
+	cipherIDs := make([]uint16, 0, len(cipherSuites))
+	for _, cipher := range cipherSuites {
+		cipherIDs = append(cipherIDs, cipher.ID)
+	}
+
+	return cipherIDs
 }
