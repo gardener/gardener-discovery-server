@@ -4,6 +4,7 @@ aliases:
   gardener-discovery-server-reviewers:
   - dimityrmirchev
   - vpnachev
+  - theoddora
   gardener-discovery-server-approvers:
   - dimityrmirchev
   - vpnachev
