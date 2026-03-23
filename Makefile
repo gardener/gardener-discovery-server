@@ -13,6 +13,7 @@ GOARCH                      ?= $(shell go env GOARCH)
 EFFECTIVE_VERSION           := $(VERSION)-$(shell git rev-parse HEAD)
 LD_FLAGS                    := "-w $(shell bash $(GARDENER_HACK_DIR)/get-build-ld-flags.sh k8s.io/component-base $(REPO_ROOT)/VERSION $(NAME))"
 PARALLEL_E2E_TESTS          := 2
+TARGET_PLATFORMS            ?= linux/$(shell go env GOARCH)
 
 ifneq ($(strip $(shell git status --porcelain 2>/dev/null)),)
 	EFFECTIVE_VERSION := $(EFFECTIVE_VERSION)-dirty
@@ -36,10 +37,16 @@ install:
 	@LD_FLAGS=$(LD_FLAGS) EFFECTIVE_VERSION=$(EFFECTIVE_VERSION) \
 		bash $(GARDENER_HACK_DIR)/install.sh ./...
 
+BUILD_OUTPUT_FILE ?= .
+
+.PHONY: build
+build:
+	@LD_FLAGS=$(LD_FLAGS) EFFECTIVE_VERSION=$(EFFECTIVE_VERSION) \
+		bash $(GARDENER_HACK_DIR)/build.sh -o $(BUILD_OUTPUT_FILE) ./cmd/discovery-server
 
 .PHONY: docker-images
 docker-images:
-	@docker build --build-arg EFFECTIVE_VERSION=$(EFFECTIVE_VERSION) --build-arg TARGETARCH=$(GOARCH) -t $(IMAGE):$(EFFECTIVE_VERSION) -t $(IMAGE):latest -f Dockerfile -m 6g --target $(NAME) .
+	@docker build --build-arg EFFECTIVE_VERSION=$(EFFECTIVE_VERSION) --platform=$(TARGET_PLATFORMS) -t $(IMAGE):$(EFFECTIVE_VERSION) -t $(IMAGE):latest -f Dockerfile -m 6g --target $(NAME) .
 
 #####################################################################
 # Rules for verification, formatting, linting, testing and cleaning #
