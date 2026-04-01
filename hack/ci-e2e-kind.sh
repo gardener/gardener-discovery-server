@@ -34,12 +34,16 @@ else
   (cd "$REPO_ROOT/gardener" && git checkout $GARDENER_VERSION)
 fi
 
+# TODO(vpnachev): Stop disabling the feature gate after it gets promoted to Beta
+yq --inplace '.config.featureGates.PrometheusHealthChecks=false' "$REPO_ROOT/gardener/example/gardener-local/gardenlet/values.yaml"
+
 clamp_mss_to_pmtu
 
 make -C "$REPO_ROOT/gardener" kind-up
 export KUBECONFIG=$REPO_ROOT/gardener/example/gardener-local/kind/local/kubeconfig
 
 trap '{
+  git -C "$REPO_ROOT/gardener" checkout -- "example/gardener-local/gardenlet/values.yaml"
   make -C "$REPO_ROOT/gardener" kind-down
 }' EXIT
 
