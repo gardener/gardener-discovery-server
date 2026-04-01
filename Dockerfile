@@ -3,9 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ############# builder
-FROM golang:1.26.1 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.1 AS builder
 
-ARG TARGETARCH
 WORKDIR /go/src/github.com/gardener/gardener-discovery-server
 
 # Copy go mod and sum files
@@ -16,11 +15,13 @@ RUN go mod download
 COPY . .
 
 ARG EFFECTIVE_VERSION
-RUN make install EFFECTIVE_VERSION=$EFFECTIVE_VERSION
+ARG TARGETOS
+ARG TARGETARCH
+RUN make build EFFECTIVE_VERSION=$EFFECTIVE_VERSION GOOS=$TARGETOS GOARCH=$TARGETARCH BUILD_OUTPUT_FILE="/output/bin/"
 
 ############# gardener-discovery-server
 FROM gcr.io/distroless/static-debian13:nonroot AS gardener-discovery-server
 WORKDIR /
 
-COPY --from=builder /go/bin/discovery-server /gardener-discovery-server
+COPY --from=builder /output/bin/discovery-server /gardener-discovery-server
 ENTRYPOINT ["/gardener-discovery-server"]
