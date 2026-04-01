@@ -274,16 +274,19 @@ func runServer(ctx context.Context, log logr.Logger, srv *http.Server) error {
 }
 
 // getCipherSuiteIDs returns the default cipher suite IDs excluding:
-// - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
-// - TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
-// - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
-// - TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+//   - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+//   - TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+//   - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+//   - TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
 func getCipherSuiteIDs() []uint16 {
+	ciphersToRemove := []uint16{
+		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+	}
 	cipherSuites := slices.DeleteFunc(tls.CipherSuites(), func(cs *tls.CipherSuite) bool {
-		return cs.ID == tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA ||
-			cs.ID == tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA ||
-			cs.ID == tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA ||
-			cs.ID == tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+		return slices.Contains(ciphersToRemove, cs.ID)
 	})
 
 	cipherIDs := make([]uint16, 0, len(cipherSuites))
