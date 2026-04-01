@@ -73,8 +73,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	labels := secret.GetLabels()
-	if v, ok := labels[v1beta1constants.LabelPublicKeys]; !ok || v != v1beta1constants.LabelPublicKeysServiceAccount { //nolint:staticcheck
-		log.Info("Removing metadata from store - secret does not have expected label or its value is incorrect", "label", v1beta1constants.LabelPublicKeys, "value", v) //nolint:staticcheck
+	if v, ok := labels[v1beta1constants.LabelDiscoveryPublic]; !ok || v != v1beta1constants.LabelPublicKeysServiceAccount {
+		log.Info("Removing metadata from store - secret does not have expected label or its value is incorrect", "label", v1beta1constants.LabelDiscoveryPublic, "value", v)
 		r.Store.Delete(req.Name)
 		return reconcile.Result{}, nil
 	}

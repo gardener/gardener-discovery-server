@@ -123,10 +123,10 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 				Name:      project.Name + "--" + string(shoot.UID),
 				Namespace: "gardener-system-shoot-issuer",
 				Labels: map[string]string{
-					"authentication.gardener.cloud/public-keys": "serviceaccount",
-					"project.gardener.cloud/name":               project.Name,
-					"shoot.gardener.cloud/name":                 shoot.Name,
-					"shoot.gardener.cloud/namespace":            shoot.Namespace,
+					"discovery.gardener.cloud/public": "serviceaccount",
+					"project.gardener.cloud/name":     project.Name,
+					"shoot.gardener.cloud/name":       shoot.Name,
+					"shoot.gardener.cloud/namespace":  shoot.Namespace,
 				},
 			},
 			Data: map[string][]byte{
@@ -187,12 +187,12 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 		Entry("secret is missing", func() {
 			Expect(c.Delete(ctx, secret)).To(Succeed())
 		}),
-		Entry("secret is not labeled with authentication.gardener.cloud/public-keys", func() {
-			delete(secret.Labels, "authentication.gardener.cloud/public-keys")
+		Entry("secret is not labeled with discovery.gardener.cloud/public", func() {
+			delete(secret.Labels, "discovery.gardener.cloud/public")
 			Expect(c.Update(ctx, secret)).To(Succeed())
 		}),
-		Entry("secret label authentication.gardener.cloud/public-keys does not have correct value", func() {
-			secret.Labels["authentication.gardener.cloud/public-keys"] = "wrong"
+		Entry("secret label discovery.gardener.cloud/public does not have correct value", func() {
+			secret.Labels["discovery.gardener.cloud/public"] = "wrong"
 			Expect(c.Update(ctx, secret)).To(Succeed())
 		}),
 		Entry("secret does not have openid-config data entry", func() {
