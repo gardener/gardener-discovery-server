@@ -159,6 +159,26 @@ var _ = Describe("#ReconcileOpenIDMeta", func() {
 		})
 	})
 
+	// TODO(vpnachev): Remove this test once support for gardener/gardener <= v1.142.0 is dropped.
+	It("should write entry to store when the deprecated label is used", func() {
+		delete(secret.Labels, "discovery.gardener.cloud/public")
+		secret.Labels["authentication.gardener.cloud/public-keys"] = "serviceaccount"
+
+		Expect(c.Create(ctx, project)).To(Succeed())
+		Expect(c.Create(ctx, shoot)).To(Succeed())
+		Expect(c.Create(ctx, secret)).To(Succeed())
+
+		res, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(secret)})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(res).To(Equal(ctrl.Result{RequeueAfter: resyncPeriod}))
+
+		Expect(s.Len()).To(Equal(1))
+		expectStoreEntry(s, secret.Name, oidstore.Data{
+			Config: []byte(`{"issuer":"https://foo","jwks_uri":"https://foo/jwks"}`),
+			JWKS:   expectedJWKSBytes,
+		})
+	})
+
 	DescribeTable(
 		"should remove entry from store because of failed validation",
 		func(prepFunc func()) {
