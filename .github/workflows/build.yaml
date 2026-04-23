@@ -60,9 +60,9 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: '1.24'
+          go-version: stable
       - uses: gardener/cc-utils/.github/actions/trusted-checkout@v1
       - name: run-verify
         run: |
@@ -102,4 +102,3 @@ jobs:
                 - name: gardener.cloud/purposes
                   value:
                     - test
-
