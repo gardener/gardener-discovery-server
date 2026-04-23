@@ -7,6 +7,7 @@ package certificate
 import (
 	"time"
 
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/controllerutils"
 	"golang.org/x/time/rate"
 	corev1 "k8s.io/api/core/v1"
@@ -60,10 +61,9 @@ func isRelevantConfigMap(obj client.Object) bool {
 	}
 	// we only allow update-restricted resources
 	// it is not safe to read data from resources that might be modified by users
-	// TODO: Use v1beta1constants.(LabelDiscoveryPublic|LabelUpdateRestriction) for label keys when gardener is updated to >= v1.112.0
 	return configmap.Labels != nil &&
-		configmap.Labels["discovery.gardener.cloud/public"] == "shoot-ca" &&
-		configmap.Labels["gardener.cloud/update-restriction"] == "true"
+		configmap.Labels[v1beta1constants.LabelDiscoveryPublic] == v1beta1constants.DiscoveryShootCA &&
+		configmap.Labels[v1beta1constants.LabelUpdateRestriction] == "true"
 }
 
 func isRelevantConfigMapUpdate(oldObj, newObj client.Object) bool {
