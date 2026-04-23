@@ -59,7 +59,7 @@ func isRelevantSecret(obj client.Object) bool {
 	if !ok {
 		return false
 	}
-	return secret.Labels != nil && secret.Labels[v1beta1constants.LabelPublicKeys] == v1beta1constants.LabelPublicKeysServiceAccount
+	return secret.Labels != nil && secret.Labels[v1beta1constants.LabelPublicKeys] == v1beta1constants.LabelPublicKeysServiceAccount //nolint:staticcheck
 }
 
 func isRelevantSecretUpdate(oldObj, newObj client.Object) bool {
