@@ -40,7 +40,9 @@ yq --inplace '.spec.config.featureGates.PrometheusHealthChecks=false' "$REPO_ROO
 
 clamp_mss_to_pmtu
 
-export KUBECONFIG="$REPO_ROOT/gardener/dev-setup/kubeconfigs/runtime/kubeconfig"
+export KUBECONFIG_VIRTUAL_GARDEN_CLUSTER="$REPO_ROOT/gardener/dev-setup/kubeconfigs/virtual-garden/kubeconfig"
+export KUBECONFIG_RUNTIME_CLUSTER="$REPO_ROOT/gardener/dev-setup/kubeconfigs/runtime/kubeconfig"
+export KUBECONFIG=$KUBECONFIG_RUNTIME_CLUSTER
 
 trap '{
   git -C "$REPO_ROOT/gardener" checkout -- "dev-setup/gardenlet/base/gardenlet.yaml"
