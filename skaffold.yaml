@@ -41,7 +41,7 @@ build:
         main: ./cmd/discovery-server
       hooks:
         after:
-          - command: ["sh", "hack/skaffold-discovery-server-image-patch.sh"]
+          - command: ["hack/skaffold-discovery-server-image-patch.sh"]
 manifests:
   kustomize:
     paths:
