@@ -1,0 +1,14 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingAdmissionPolicyBinding
+metadata:
+  name: patch-discovery-server-image
+spec:
+  policyName: patch-discovery-server-image
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: garden
+    objectSelector:
+      matchLabels:
+        app: gardener
+        role: discovery-server

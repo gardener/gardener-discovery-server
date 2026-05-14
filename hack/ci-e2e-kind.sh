@@ -29,25 +29,25 @@ GARDENER_VERSION=$(go list -m -f '{{.Version}}' github.com/gardener/gardener)
 ensure_local_gardener_cloud_hosts
 
 if [[ ! -d "$REPO_ROOT/gardener" ]]; then
-  git clone --branch $GARDENER_VERSION https://github.com/gardener/gardener.git
+  git clone --depth 1 --branch $GARDENER_VERSION https://github.com/gardener/gardener.git
 else
-  (cd "$REPO_ROOT/gardener" && git checkout $GARDENER_VERSION)
+  git -C "$REPO_ROOT/gardener" fetch --depth 1 --tags origin "$GARDENER_VERSION"
+  git -C "$REPO_ROOT/gardener" checkout "$GARDENER_VERSION"
 fi
 
-# TODO(vpnachev): Stop disabling the feature gate after it gets promoted to Beta
-yq --inplace '.config.featureGates.PrometheusHealthChecks=false' "$REPO_ROOT/gardener/example/gardener-local/gardenlet/values.yaml"
+# TODO(vpnachev): Stop disabling the `PrometheusHealthChecks` feature gate after it gets promoted to Beta
+yq --inplace '.spec.config.featureGates.PrometheusHealthChecks=false' "$REPO_ROOT/gardener/dev-setup/gardenlet/base/gardenlet.yaml"
 
 clamp_mss_to_pmtu
 
-make -C "$REPO_ROOT/gardener" kind-up
-export KUBECONFIG=$REPO_ROOT/gardener/example/gardener-local/kind/local/kubeconfig
+export KUBECONFIG="$REPO_ROOT/gardener/dev-setup/kubeconfigs/runtime/kubeconfig"
 
 trap '{
-  git -C "$REPO_ROOT/gardener" checkout -- "example/gardener-local/gardenlet/values.yaml"
+  git -C "$REPO_ROOT/gardener" checkout -- "dev-setup/gardenlet/base/gardenlet.yaml"
   make -C "$REPO_ROOT/gardener" kind-down
 }' EXIT
 
-make -C "$REPO_ROOT/gardener" gardener-up
+make -C "$REPO_ROOT/gardener" kind-up gardener-up
 make server-up
 make test-e2e-local
 make server-down

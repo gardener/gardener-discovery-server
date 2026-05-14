@@ -23,3 +23,6 @@ testdata
 
 # gosec
 gosec-report.sarif
+
+# local clone used by e2e tests
+/gardener
