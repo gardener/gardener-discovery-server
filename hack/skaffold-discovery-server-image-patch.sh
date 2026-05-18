@@ -7,7 +7,7 @@
 set -o pipefail
 set -o errexit
 
-repo_root="$(readlink -f $(dirname ${0})/..)"
+repo_root="$(readlink -f "$(dirname "${0}")"/..)"
 
 # Dump container image to a file so that other utility scripts can use it.
 echo "${SKAFFOLD_IMAGE}" > "${repo_root}/example/local/discovery-server/discovery-server-image"
@@ -27,6 +27,11 @@ spec:
               op: "replace",
               path: "/spec/containers/0/image",
               value: "$SKAFFOLD_IMAGE"
+            },
+            JSONPatch{
+              op: "add",
+              path: "/metadata/labels/" + jsonpatch.escapeKey("discovery.gardener.cloud/image-patched"),
+              value: "true"
             }
           ]
 EOF
