@@ -117,13 +117,13 @@ jobs:
     strategy:
       matrix:
         args:
-          - name: discovery-server
+          - name: gardener-discovery-server
             dir: charts/discovery-server
             oci-repository: charts/gardener/gardener-discovery-server
             ocm-mappings:
-              - ref: ocm-resource:discovery-server.repository
+              - ref: ocm-resource:gardener-discovery-server.repository
                 attribute: runtime.image.repository
-              - ref: ocm-resource:discovery-server.tag
+              - ref: ocm-resource:gardener-discovery-server.tag
                 attribute: runtime.image.tag
     with:
       name: ${{ matrix.args.name }}
