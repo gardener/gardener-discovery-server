@@ -22,7 +22,7 @@ import (
 const projectNamespace = "garden-local"
 
 func defaultShootCreationFramework() *framework.ShootCreationFramework {
-	kubeconfigPath := os.Getenv("KUBECONFIG")
+	kubeconfigPath := os.Getenv("KUBECONFIG_VIRTUAL_GARDEN_CLUSTER")
 	return framework.NewShootCreationFramework(&framework.ShootCreationConfig{
 		GardenerConfig: &framework.GardenerConfig{
 			ProjectNamespace:   projectNamespace,

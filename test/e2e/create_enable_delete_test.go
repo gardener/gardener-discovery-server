@@ -52,7 +52,7 @@ var _ = Describe("Managed Issuer Tests", Label("ManagedIssuer"), func() {
 
 		By("Check that the Discovery Server is able to serve the shoot's OIDC discovery documents")
 
-		configSecret, err := gardenClusterClientset.CoreV1().Secrets("garden").Get(parentCtx, "shoot-service-account-issuer", metav1.GetOptions{})
+		configSecret, err := f.GardenClient.Kubernetes().CoreV1().Secrets("garden").Get(parentCtx, "shoot-service-account-issuer", metav1.GetOptions{})
 		Expect(err).ToNot(HaveOccurred())
 		hostname := string(configSecret.Data["hostname"])
 		resp, err = getWellKnownForShoot(parentCtx, f.Shoot.ObjectMeta.UID)

@@ -4,6 +4,17 @@ kind: Config
 metadata:
   name: discovery-server
 build:
+  tagPolicy:
+    customTemplate:
+      template: '{{.version}}-{{.sha}}'
+      components:
+        - name: version
+          envTemplate:
+            template: '{{.EFFECTIVE_VERSION}}'
+        - name: sha
+          inputDigest: {}
+  insecureRegistries:
+    - registry.local.gardener.cloud:5001
   artifacts:
     - image: local-skaffold/discovery-server
       ko:
@@ -28,22 +39,19 @@ build:
         ldflags:
           - '{{.LD_FLAGS}}'
         main: ./cmd/discovery-server
+      hooks:
+        after:
+          - command: ["hack/skaffold-discovery-server-image-patch.sh"]
+manifests:
+  kustomize:
+    paths:
+      - example/local/discovery-server
 deploy:
-  helm:
+  kubectl:
     hooks:
-      before:
+      after:
         - host:
             command:
-              - ./hack/create-tls-secret.sh
-    releases:
-      - name: gardener-discovery-server
-        chartPath: charts/discovery-server
-        valuesFiles:
-          - example/local/values.yaml
-        namespace: garden
-        setValueTemplates:
-          runtime.image.repository: '{{.IMAGE_REPO_local_skaffold_discovery_server}}'
-          runtime.image.tag: '{{.IMAGE_TAG_local_skaffold_discovery_server}}@{{.IMAGE_DIGEST_local_skaffold_discovery_server}}'
-        createNamespace: true
-        wait: false
+              - hack/wait-discovery-server-deployment.sh
+              - deploy
 profiles: []

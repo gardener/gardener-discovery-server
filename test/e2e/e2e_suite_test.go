@@ -10,7 +10,6 @@ import (
 	"crypto/x509"
 	"net/http"
 	"os"
-	"os/exec"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -26,14 +25,13 @@ func TestE2E(t *testing.T) {
 }
 
 const (
-	discoveryServerBaseURI = "https://localhost:10443"
+	discoveryServerBaseURI = "https://discovery.local.gardener.cloud"
 )
 
 var (
-	cmd                    *exec.Cmd
-	parentCtx              = context.Background()
-	discoveryClient        *http.Client
-	gardenClusterClientset *kubernetes.Clientset
+	parentCtx                     = context.Background()
+	discoveryClient               *http.Client
+	gardenRuntimeClusterClientset *kubernetes.Clientset
 )
 
 var _ = BeforeEach(func() {
@@ -41,24 +39,23 @@ var _ = BeforeEach(func() {
 })
 
 var _ = BeforeSuite(func() {
-	// let's hope that this is stable and does not introduces flakiness
-	// port-forward can be revisited later on if it causes unstable connection during tests
-	cmd = exec.Command("kubectl", "-n", "garden", "port-forward", "service/gardener-discovery-server", "10443:10443")
-	Expect(cmd.Start()).To(Succeed())
-
-	kubeconfigPath := os.Getenv("KUBECONFIG")
+	kubeconfigPath := os.Getenv("KUBECONFIG_RUNTIME_CLUSTER")
 	kubeconfigBytes, err := os.ReadFile(kubeconfigPath)
 	Expect(err).ToNot(HaveOccurred())
 
 	cfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
 	Expect(err).ToNot(HaveOccurred())
-	gardenClusterClientset, err = kubernetes.NewForConfig(cfg)
+	gardenRuntimeClusterClientset, err = kubernetes.NewForConfig(cfg)
 	Expect(err).ToNot(HaveOccurred())
 
-	secret, err := gardenClusterClientset.CoreV1().Secrets("garden").Get(parentCtx, "gardener-discovery-server-tls", metav1.GetOptions{})
+	secrets, err := gardenRuntimeClusterClientset.CoreV1().Secrets("garden").List(parentCtx, metav1.ListOptions{LabelSelector: "name=gardener-discovery-server-tls,manager-identity=gardener-operator"})
 	Expect(err).ToNot(HaveOccurred())
+	Expect(secrets.Items).ToNot(BeEmpty())
 	pool := x509.NewCertPool()
-	pool.AppendCertsFromPEM(secret.Data["tls.crt"])
+	for _, secret := range secrets.Items {
+		pool.AppendCertsFromPEM(secret.Data["tls.crt"])
+	}
+
 	discoveryClient = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -66,9 +63,4 @@ var _ = BeforeSuite(func() {
 			},
 		},
 	}
-
-})
-
-var _ = AfterSuite(func() {
-	Expect(cmd.Process.Kill()).To(Succeed())
 })

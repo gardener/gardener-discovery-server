@@ -113,15 +113,20 @@ verify-extended: check-generate check format test test-cov test-clean sast-repor
 
 # use static label for skaffold to prevent rolling all gardener components on every `skaffold` invocation
 server-up server-down: export SKAFFOLD_LABEL = skaffold.dev/run-id=server-local
+# push the images to the local registry
+server-up server-down: export SKAFFOLD_DEFAULT_REPO = registry.local.gardener.cloud:5001
+server-up server-down: export SKAFFOLD_PUSH = true
 
-server-up: $(SKAFFOLD) $(KIND) $(HELM)
-	@LD_FLAGS=$(LD_FLAGS) $(SKAFFOLD) run
+server-up: $(SKAFFOLD) $(KIND)
+	@LD_FLAGS=$(LD_FLAGS) EFFECTIVE_VERSION=$(EFFECTIVE_VERSION) \
+		$(SKAFFOLD) --cache-artifacts=false run
 
-server-dev: $(SKAFFOLD) $(HELM)
+server-dev: $(SKAFFOLD)
 	$(SKAFFOLD) dev --cleanup=false --trigger=manual
 
-server-down: $(SKAFFOLD) $(HELM)
+server-down: $(SKAFFOLD) $(KUBECTL)
 	$(SKAFFOLD) delete
+	$(HACK_DIR)/wait-discovery-server-deployment.sh delete
 
 test-e2e-local: $(GINKGO) $(KUBECTL)
 	./hack/test-e2e-local.sh --procs=$(PARALLEL_E2E_TESTS) ./test/e2e/...
