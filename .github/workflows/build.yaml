@@ -24,6 +24,7 @@ jobs:
     name: Build OCI-Images
     needs:
       - prepare
+      - verify
     permissions:
       contents: read
       packages: write
@@ -102,3 +103,44 @@ jobs:
                 - name: gardener.cloud/purposes
                   value:
                     - test
+
+  helmcharts:
+    name: Build Helmcharts
+    needs:
+      - prepare
+      - oci-images
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: gardener/cc-utils/.github/workflows/helmchart-ocm.yaml@v1
+    strategy:
+      matrix:
+        args:
+          - name: discovery-server
+            dir: charts/discovery-server
+            oci-repository: charts/gardener/gardener-discovery-server
+            ocm-mappings:
+              - ref: ocm-resource:discovery-server.repository
+                attribute: runtime.image.repository
+              - ref: ocm-resource:discovery-server.tag
+                attribute: runtime.image.tag
+    with:
+      name: ${{ matrix.args.name }}
+      dir: ${{ matrix.args.dir }}
+      oci-registry: ${{ needs.prepare.outputs.oci-registry }}
+      oci-repository: ${{ matrix.args.oci-repository }}
+      ocm-mappings: ${{ toJSON(matrix.args.ocm-mappings) }}
+
+  helmcharts-summary:
+    name: Helm Charts Summary
+    runs-on: ubuntu-latest
+    needs:
+    - helmcharts
+    if: ${{ always() }}  # Ensures this job runs even if the matrix partially fails
+    permissions:
+      contents: read
+    steps:
+      - name: Fail if Helm Charts matrix failed
+        if: ${{ needs.helmcharts.result != 'success' }}
+        run: exit 1
