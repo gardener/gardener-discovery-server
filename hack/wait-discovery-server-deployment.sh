@@ -37,7 +37,7 @@ patch_and_verify() {
   fi
 
   # re-use the annotation key 'kubectl.kubernetes.io/restartedAt' as any other will be removed by GRM.
-  printf -v patch '{"spec": {"template": {"metadata": {"annotations": {"kubectl.kubernetes.io/restartedAt": %s}}}}}' $annotation_value
+  printf -v patch '{"spec": {"template": {"metadata": {"annotations": {"kubectl.kubernetes.io/restartedAt": %s}}}}}' "$annotation_value"
 
   kubectl -n garden patch deployment gardener-discovery-server --type merge -p "$patch"
   kubectl -n garden rollout status deployment gardener-discovery-server --timeout=60s
