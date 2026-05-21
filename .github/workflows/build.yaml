@@ -132,7 +132,7 @@ jobs:
         args:
           - name: gardener-discovery-server
             dir: charts/discovery-server
-            oci-repository: charts/gardener/gardener-discovery-server
+            oci-repository: charts/gardener
             ocm-mappings:
               - ref: ocm-resource:gardener-discovery-server.repository
                 attribute: runtime.image.repository
