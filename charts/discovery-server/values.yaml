@@ -36,7 +36,7 @@ runtime:
       minAllowed:
         memory: 64Mi
     updatePolicy:
-      updateMode: "Recreate"
+      updateMode: "InPlaceOrRecreate"
 
   # Kubeconfig to the target cluster. In-cluster configuration will be used if not specified.
   kubeconfig:
