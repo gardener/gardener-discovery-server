@@ -73,21 +73,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	labels := secret.GetLabels()
-	shouldRemoveMetadata := false
-	if v, ok := labels[v1beta1constants.LabelDiscoveryPublic]; !ok || v != v1beta1constants.LabelPublicKeysServiceAccount {
-		log.Info("Considering metadata for removal from the store - secret does not have expected label or its value is incorrect")
-		shouldRemoveMetadata = true
-	}
-
-	// TODO(vpnachev): Remove the fallback to "authentication.gardener.cloud/public-keys" once support for gardener/gardener <= v1.142.0 is dropped.
-	if v, ok := labels["authentication.gardener.cloud/public-keys"]; shouldRemoveMetadata && ok && v == v1beta1constants.LabelPublicKeysServiceAccount { //nolint:staticcheck
-		log.Info("Metadata will not be removed from the store - found the deprecated label with expected value, this is for backward compatibility with gardener/gardener <= v1.142.0")
-		shouldRemoveMetadata = false
-	}
-
-	if shouldRemoveMetadata {
-		log.Info("Removing metadata from store - secret does not have any of the expected labels or their values are incorrect", "label", v1beta1constants.LabelDiscoveryPublic, "value", labels[v1beta1constants.LabelDiscoveryPublic],
-			"alternativeLabel", "authentication.gardener.cloud/public-keys", "alternativeValue", labels["authentication.gardener.cloud/public-keys"]) //nolint:staticcheck
+	if value, ok := labels[v1beta1constants.LabelDiscoveryPublic]; !ok || value != v1beta1constants.LabelPublicKeysServiceAccount {
+		log.Info("Removing metadata from store - secret does not have expected label or its value is incorrect", "label", v1beta1constants.LabelDiscoveryPublic, "value", value)
 		r.Store.Delete(req.Name)
 		return reconcile.Result{}, nil
 	}

@@ -59,10 +59,7 @@ func isRelevantSecret(obj client.Object) bool {
 	if !ok {
 		return false
 	}
-	return secret.Labels != nil &&
-		(secret.Labels[v1beta1constants.LabelDiscoveryPublic] == v1beta1constants.LabelPublicKeysServiceAccount ||
-			// TODO(vpnachev): Remove "authentication.gardener.cloud/public-keys" once support for gardener/gardener <= v1.142.0 is dropped.
-			secret.Labels["authentication.gardener.cloud/public-keys"] == v1beta1constants.LabelPublicKeysServiceAccount) //nolint:staticcheck
+	return secret.Labels != nil && secret.Labels[v1beta1constants.LabelDiscoveryPublic] == v1beta1constants.LabelPublicKeysServiceAccount
 }
 
 func isRelevantSecretUpdate(oldObj, newObj client.Object) bool {
