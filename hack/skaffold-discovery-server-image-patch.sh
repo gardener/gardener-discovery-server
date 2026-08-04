@@ -13,7 +13,7 @@ repo_root="$(readlink -f "$(dirname "${0}")"/..)"
 echo "${SKAFFOLD_IMAGE}" > "${repo_root}/example/local/discovery-server/discovery-server-image"
 
 cat <<EOF > "${repo_root}/example/local/discovery-server/patch-mutating-admission-policy.yaml"
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingAdmissionPolicy
 metadata:
   name: patch-discovery-server-image

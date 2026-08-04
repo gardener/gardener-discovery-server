@@ -28,8 +28,8 @@ GARDENER_VERSION=$(go list -m -f '{{.Version}}' github.com/gardener/gardener)
 
 ensure_local_gardener_cloud_hosts
 
-if [[ ! -d "$REPO_ROOT/gardener" ]]; then
-  git clone --depth 1 --branch $GARDENER_VERSION https://github.com/gardener/gardener.git
+if [[ ! -d "$REPO_ROOT/gardener" ]] || [[ "$(cat "$REPO_ROOT/gardener/VERSION" 2>/dev/null)" != "$GARDENER_VERSION" ]]; then
+  git clone --depth 1 --branch $GARDENER_VERSION https://github.com/gardener/gardener.git "$REPO_ROOT/gardener"
 else
   git -C "$REPO_ROOT/gardener" fetch --depth 1 --tags origin "$GARDENER_VERSION"
   git -C "$REPO_ROOT/gardener" checkout "$GARDENER_VERSION"
