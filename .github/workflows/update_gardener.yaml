@@ -2,7 +2,7 @@ name: Update Gardener
 on:
   push:
     branches:
-    - dependabot/go_modules/github.com/gardener/**
+    - dependabot/go_modules/gardener-*
 permissions: write-all
 jobs:
   run:
