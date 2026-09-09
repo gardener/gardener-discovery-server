@@ -16,7 +16,8 @@ import (
 
 const (
 	headerCacheControl = "Cache-Control"
-	pubCacheControl    = "public, max-age=3600"
+	// PubCacheControlDefault is the default Cache-Control value for cacheable responses.
+	PubCacheControlDefault = "public, max-age=3600"
 
 	headerContentType = "Content-Type"
 	mimeAppJSON       = "application/json"
@@ -77,7 +78,7 @@ func NotFound(log logr.Logger) http.Handler {
 // It requires "projectName" and "shootUID" as path parameters.
 // The data is read from the store and the content is extracted using the getContent function.
 // The returned result from getContent should be in JSON format.
-func StoreRequest[T any](log logr.Logger, s store.Reader[T], getContent func(T) []byte) http.Handler {
+func StoreRequest[T any](log logr.Logger, s store.Reader[T], cacheControl string, getContent func(T) []byte) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		shootUID := r.PathValue("shootUID")
 		if _, err := uuid.Parse(shootUID); err != nil {
@@ -97,7 +98,7 @@ func StoreRequest[T any](log logr.Logger, s store.Reader[T], getContent func(T) 
 			return
 		}
 
-		w.Header().Set(headerCacheControl, pubCacheControl)
+		w.Header().Set(headerCacheControl, cacheControl)
 		w.Header().Set(headerContentType, mimeAppJSON)
 		if _, err := w.Write(getContent(data)); err != nil {
 			log.Error(err, "Failed writing response")
