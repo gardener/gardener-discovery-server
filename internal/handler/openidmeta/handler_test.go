@@ -73,7 +73,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			map[string]string{
 				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
-				"Cache-Control":             "public, max-age=3600",
+				"Cache-Control":             "public, max-age=120",
 			},
 		),
 		Entry(
@@ -85,7 +85,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			map[string]string{
 				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
-				"Cache-Control":             "public, max-age=3600",
+				"Cache-Control":             "public, max-age=120",
 			},
 		),
 		Entry(
@@ -97,7 +97,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			map[string]string{
 				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
-				"Cache-Control":             "public, max-age=3600",
+				"Cache-Control":             "public, max-age=120",
 			},
 		),
 		Entry(
@@ -109,7 +109,7 @@ var _ = Describe("#HttpHandlerOpenIDMeta", func() {
 			map[string]string{
 				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 				"Content-Type":              "application/json",
-				"Cache-Control":             "public, max-age=3600",
+				"Cache-Control":             "public, max-age=120",
 			},
 		),
 		Entry(
