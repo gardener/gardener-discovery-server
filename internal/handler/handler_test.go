@@ -120,7 +120,7 @@ var _ = Describe("#Handler", func() {
 
 			resp := httptest.NewRecorder()
 
-			h := handler.StoreRequest(log, s, func(data string) []byte { return []byte(`{"data":"` + data + `"}`) })
+			h := handler.StoreRequest(log, s, "public, max-age=3600", func(data string) []byte { return []byte(`{"data":"` + data + `"}`) })
 			h.ServeHTTP(resp, req)
 
 			Expect(resp).To(HaveHTTPStatus(http.StatusOK))
@@ -138,7 +138,7 @@ var _ = Describe("#Handler", func() {
 
 			resp := httptest.NewRecorder()
 
-			h := handler.StoreRequest(log, s, func(data string) []byte { return []byte(`{"data":"` + data + `"}`) })
+			h := handler.StoreRequest(log, s, "public, max-age=3600", func(data string) []byte { return []byte(`{"data":"` + data + `"}`) })
 			h.ServeHTTP(resp, req)
 
 			Expect(resp).To(HaveHTTPStatus(http.StatusNotFound))
@@ -155,7 +155,7 @@ var _ = Describe("#Handler", func() {
 
 			resp := httptest.NewRecorder()
 
-			h := handler.StoreRequest(log, s, func(data string) []byte { return []byte(`{"data":"` + data + `"}`) })
+			h := handler.StoreRequest(log, s, "public, max-age=3600", func(data string) []byte { return []byte(`{"data":"` + data + `"}`) })
 			h.ServeHTTP(resp, req)
 
 			Expect(resp).To(HaveHTTPStatus(http.StatusBadRequest))

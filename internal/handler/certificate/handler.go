@@ -33,7 +33,7 @@ func New(store store.Reader[certificate.Data], log logr.Logger) *Handler {
 func (h *Handler) HandleCABundle() http.Handler {
 	log := h.log.WithName("cluster-ca")
 	return handler.SetHSTS(
-		handler.AllowMethods(handler.StoreRequest(log, h.store,
+		handler.AllowMethods(handler.StoreRequest(log, h.store, handler.PubCacheControlDefault,
 			func(data certificate.Data) []byte { return data.CABundle },
 		),
 			log, http.MethodGet, http.MethodHead,
