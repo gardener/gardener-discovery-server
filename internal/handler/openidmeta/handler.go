@@ -20,6 +20,7 @@ import (
 // Kubernetes OIDC authenticator does not refetch on an unknown key ID and only
 // refreshes once the cached keys expire per this header.
 // See https://github.com/kubernetes/kubernetes/issues/139769.
+// TODO: Revert max-age to a longer duration once the above issue is resolved.
 const pubCacheControl = "public, max-age=120"
 
 // Handler is capable of serving openid discovery documents.

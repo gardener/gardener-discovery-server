@@ -18,7 +18,14 @@ import (
 
 const (
 	headerCacheControl = "Cache-Control"
-	pubCacheControl    = "public, max-age=3600"
+	// pubCacheControl is the Cache-Control value served for workload identity
+	// discovery documents. It is intentionally short so that consumers refetch
+	// the JWKS promptly after a workload identity signing key rotation, since the
+	// Kubernetes OIDC authenticator does not refetch on an unknown key ID and only
+	// refreshes once the cached keys expire per this header.
+	// See https://github.com/kubernetes/kubernetes/issues/139769.
+	// TODO: Revert max-age to a longer duration once the above issue is resolved.
+	pubCacheControl = "public, max-age=120"
 
 	headerContentType = "Content-Type"
 	mimeAppJSON       = "application/json"
